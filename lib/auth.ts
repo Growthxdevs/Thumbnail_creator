@@ -15,6 +15,7 @@ export const authOptions: NextAuthOptions = {
     signOut: "/",
     error: "/auth/error",
   },
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -76,7 +77,12 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? "/editor" : "/editor";
+      // If url is relative, make it absolute
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // If url is on the same origin, allow it
+      else if (new URL(url).origin === baseUrl) return url;
+      // Otherwise redirect to editor
+      return `${baseUrl}/editor`;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
