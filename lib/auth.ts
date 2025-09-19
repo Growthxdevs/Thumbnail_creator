@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/api/auth/signin",
     signOut: "/",
-    error: "/auth/error",
+    error: "/",
   },
   debug: process.env.NODE_ENV === "development",
   callbacks: {
@@ -85,8 +85,8 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       // If url is on the same origin, allow it
       else if (new URL(url).origin === baseUrl) return url;
-      // Otherwise redirect to editor
-      return `${baseUrl}/editor`;
+      // For external URLs, redirect to home to avoid loops
+      return baseUrl;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
