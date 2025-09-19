@@ -6,10 +6,13 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    // Only allow authenticated users to access this debug endpoint
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Debug session information
+    console.log("Debug endpoint accessed:", {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      timestamp: new Date().toISOString(),
+    });
 
     // Check environment variables (without exposing sensitive values)
     const envCheck = {
@@ -41,7 +44,14 @@ export async function GET() {
 
       // Timestamp
       timestamp: new Date().toISOString(),
-      userEmail: session.user.email,
+      userEmail: session?.user?.email || "Not authenticated",
+
+      // Session debug info
+      sessionStatus: {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        isAuthenticated: !!(session && session.user),
+      },
     };
 
     return NextResponse.json(envCheck);
