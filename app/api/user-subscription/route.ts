@@ -13,14 +13,21 @@ export async function GET() {
       hasUser: !!session?.user,
       userEmail: session?.user?.email,
       timestamp: new Date().toISOString(),
+      nodeEnv: process.env.NODE_ENV,
+      nextAuthUrl: process.env.NEXTAUTH_URL,
     });
 
     if (!session || !session.user) {
-      console.log("No session found, returning 401");
+      console.log("No session found, returning 401", {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        sessionKeys: session ? Object.keys(session) : [],
+      });
       return NextResponse.json(
         {
           error: "Unauthorized",
           debug: "No valid session found",
+          timestamp: new Date().toISOString(),
         },
         { status: 401 }
       );

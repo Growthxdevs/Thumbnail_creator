@@ -30,7 +30,7 @@ export default function RemoveBackground() {
     fontFamily: fontFamily,
   };
   const { data: session } = useSession();
-  const { isPro } = useSubscriptionStatus();
+  const { isPro, error } = useSubscriptionStatus();
 
   return (
     <div className="w-full min-h-screen p-8">

@@ -17,7 +17,7 @@ import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 
 const TopBar = () => {
   const { data: session, status } = useSession();
-  const { isPro, loading } = useSubscriptionStatus();
+  const { isPro, loading, error } = useSubscriptionStatus();
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-black/30">

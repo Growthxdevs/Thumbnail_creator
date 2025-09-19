@@ -23,7 +23,7 @@ const TextBehindImage = () => {
   ];
 
   const galleryImages2 = [
-    { src: "december", alt: "Winter Mood" },
+    { src: "December", alt: "Winter Mood" },
     { src: "peace", alt: "Serene Moment" },
     { src: "dream", alt: "Dreamscape" },
     { src: "love", alt: "Emotional Landscape" },
