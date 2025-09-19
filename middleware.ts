@@ -19,7 +19,7 @@ export default withAuth(
   },
   {
     pages: {
-      signIn: "/api/auth/signin/google",
+      signIn: "/api/auth/signin",
     },
   }
 );

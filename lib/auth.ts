@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: "/api/auth/signin/google",
+    signIn: "/api/auth/signin",
     signOut: "/",
     error: "/auth/error",
   },
@@ -92,4 +92,6 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   // Ensure proper URL handling in production
   trustHost: true,
+  // Add explicit URL configuration for production
+  ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
 };
