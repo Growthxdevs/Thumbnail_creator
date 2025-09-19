@@ -6,18 +6,56 @@ import { db } from "@/lib/prisma";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Enhanced debugging for production
+    console.log("Session check:", {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!session || !session.user) {
+      console.log("No session found, returning 401");
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          debug: "No valid session found",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.email) {
+      console.log("No user email in session");
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          debug: "No user email in session",
+        },
+        { status: 401 }
+      );
     }
 
     const user = await db.user.findUnique({
-      where: { email: session.user.email || "" },
+      where: { email: session.user.email },
       select: { isPro: true },
+    });
+
+    console.log("User found:", {
+      email: session.user.email,
+      isPro: user?.isPro,
     });
 
     return NextResponse.json({ isPro: user?.isPro || false });
   } catch (error) {
     console.error("Error fetching subscription:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Server error",
+        debug: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }

@@ -6,8 +6,11 @@ export default withAuth(
     const url = req.nextUrl.clone();
     const isAuthenticated = !!req.nextauth.token;
 
-    // If user is authenticated and trying to access sign-in page, redirect to editor
-    if (isAuthenticated && req.nextUrl.pathname === "/auth/signin") {
+    // If user is authenticated and trying to access sign-in, redirect to editor
+    if (
+      isAuthenticated &&
+      req.nextUrl.pathname.startsWith("/api/auth/signin")
+    ) {
       url.pathname = "/editor";
       return NextResponse.redirect(url);
     }
@@ -16,11 +19,11 @@ export default withAuth(
   },
   {
     pages: {
-      signIn: "/auth/signin",
+      signIn: "/api/auth/signin/google",
     },
   }
 );
 
 export const config = {
-  matcher: ["/editor/:path*", "/auth/signin"],
+  matcher: ["/editor/:path*", "/api/auth/signin/:path*"],
 };
