@@ -3,7 +3,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 const TextBehindImage = () => {
@@ -31,14 +30,8 @@ const TextBehindImage = () => {
     { src: "vision", alt: "Visionary Concept" },
   ];
 
-  const { data: session } = useSession();
-
   const handleOpenApp = () => {
-    if (session && router) {
-      router.push("/editor");
-    } else {
-      signIn("google");
-    }
+    router.push("/editor");
   };
   return (
     <div className="py-16 flex flex-col items-center text-center px-6">

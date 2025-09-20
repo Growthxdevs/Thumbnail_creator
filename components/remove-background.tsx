@@ -1,8 +1,6 @@
 import { useState } from "react";
 import ImagePreview from "./image-preview";
 import ImageControls from "./image-controls";
-import { useSession } from "next-auth/react";
-import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 
 // interface RemoveBackgroundProps {
 //   imageUrl: string;
@@ -29,8 +27,9 @@ export default function RemoveBackground() {
     opacity: textOpacity,
     fontFamily: fontFamily,
   };
-  const { data: session } = useSession();
-  const { isPro, error } = useSubscriptionStatus();
+  // Auth removed - using default values
+  const credits = 0; // Default credits
+  const isPro = false; // Default to free user
 
   return (
     <div className="w-full min-h-screen p-8">
@@ -71,7 +70,7 @@ export default function RemoveBackground() {
           {/* Right Side - Controls */}
           <ImageControls
             setLoading={setLoading}
-            credits={session?.user?.credits ?? 0}
+            credits={credits}
             text={text}
             setResultImage={setResultImage}
             setText={setText}

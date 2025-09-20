@@ -66,16 +66,6 @@ function ImagePreview({
   };
   const handleDownload = async () => {
     try {
-      const response = await axios.post("/api/credits/deduct");
-      const data = response.data;
-
-      if (!data.success) {
-        console.log(
-          data.error || "You do not have enough credits to perform this action."
-        );
-        return;
-      }
-
       if (compositionRef.current) {
         const scale = 4;
 
@@ -96,8 +86,8 @@ function ImagePreview({
         link.click();
       }
     } catch (error) {
-      console.error("Error deducting credits or generating image:", error);
-      alert("An error occurred. Please try again later.");
+      console.error("Error generating image:", error);
+      alert("An error occurred while generating the image. Please try again.");
     }
   };
 
