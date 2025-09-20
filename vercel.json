@@ -22,5 +22,10 @@
   },
   "env": {
     "PRISMA_QUERY_ENGINE_LIBRARY": "1"
+  },
+  "build": {
+    "env": {
+      "PRISMA_QUERY_ENGINE_LIBRARY": "1"
+    }
   }
 }
