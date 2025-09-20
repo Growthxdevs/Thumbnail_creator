@@ -10,10 +10,12 @@ export function useCreditInit() {
 
   useEffect(() => {
     // Initialize credits from session when user logs in
-    if (session?.user?.credits !== undefined && credits === 0) {
-      setCredits(session.user.credits);
+    if (session?.user?.credits !== undefined) {
+      // Ensure credits are never negative (cap at 0)
+      const validCredits = Math.max(0, session.user.credits);
+      setCredits(validCredits);
     }
-  }, [session?.user?.credits, setCredits, credits]);
+  }, [session?.user?.credits, setCredits]);
 
   return { credits };
 }

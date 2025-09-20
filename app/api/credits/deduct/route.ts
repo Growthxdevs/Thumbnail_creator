@@ -24,9 +24,18 @@ export async function POST(req: Request) {
       select: { credits: true },
     });
 
-    if (!user || user.credits < amount) {
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    // Strict validation: credits must be greater than or equal to amount
+    if (user.credits < amount) {
       return NextResponse.json(
-        { message: "Insufficient credits" },
+        {
+          message: "Insufficient credits",
+          currentCredits: user.credits,
+          requestedAmount: amount,
+        },
         { status: 400 }
       );
     }

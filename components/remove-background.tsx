@@ -40,7 +40,9 @@ export default function RemoveBackground() {
 
   // Function to handle credit deduction
   const handleCreditDeduction = async () => {
+    // Double-check credits before making API call
     if (credits <= 0) {
+      console.log("Client-side validation: No credits available");
       return false; // No credits available
     }
 
@@ -54,11 +56,14 @@ export default function RemoveBackground() {
       });
 
       if (response.ok) {
-        // Update credits in context (no session update needed)
+        const data = await response.json();
+        // Only update Zustand store if API call was successful
         deductCredits(1);
+        console.log("Credit deducted successfully, new balance:", data.credits);
         return true; // Credit deducted successfully
       } else {
-        console.error("Failed to deduct credit");
+        const errorData = await response.json();
+        console.error("API validation failed:", errorData);
         return false;
       }
     } catch (error) {

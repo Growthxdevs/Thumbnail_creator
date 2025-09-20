@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import Image from "next/image";
 import axios from "axios";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -197,11 +198,13 @@ function ImagePreview({
         )}
 
         {removedBgImage && !isCleared && (
-          <img
+          <Image
             src={removedBgImage}
             alt="Subject"
+            fill
             onLoad={handleImageLoad}
-            className="absolute inset-0 object-contain"
+            className="object-contain"
+            unoptimized
           />
         )}
 
@@ -223,10 +226,12 @@ function ImagePreview({
         )}
 
         {resultImage && !isCleared && (
-          <img
+          <Image
             src={resultImage}
             alt="Processed Image"
-            className="absolute inset-0 object-contain z-20"
+            fill
+            className="object-contain z-20"
+            unoptimized
           />
         )}
 
