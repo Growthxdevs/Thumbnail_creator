@@ -65,9 +65,37 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 4. All API routes are protected and require authentication
 5. User menu shows credits and Pro status
 
+## Debug Environment Variables
+
+You can check your environment variables using the debug route:
+
+### API Endpoint
+
+- **Basic check**: `GET /api/debug/env`
+- **Show values**: `GET /api/debug/env?showValues=true`
+- **Works in**: Development and Production
+
+### Debug Page
+
+- **URL**: `http://localhost:3000/debug` (dev) or `https://yourdomain.com/debug` (prod)
+- **Features**:
+  - Toggle between showing status and actual values
+  - Copy environment data to clipboard
+  - Refresh data in real-time
+  - Visual status indicators
+  - Production warnings for security
+
+### ⚠️ Production Security Warning
+
+- The debug route works in production for testing purposes
+- **CRITICAL**: Never expose sensitive values in production
+- Use `?showValues=true` only for testing and remove immediately
+- The system shows clear warnings when sensitive data is exposed
+
 ## Next Steps
 
 1. Set up Google OAuth provider
 2. Add environment variables
 3. Test authentication flow
-4. Customize UI components as needed
+4. Use `/debug` page to verify your environment setup
+5. Customize UI components as needed
