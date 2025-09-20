@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
@@ -95,5 +96,29 @@ export default function AuthError() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <AlertCircle className="h-6 w-6 text-gray-600" />
+              </div>
+              <CardTitle className="text-2xl">Loading...</CardTitle>
+              <CardDescription>
+                Please wait while we load the error details.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
+      <AuthErrorContent />
+    </Suspense>
   );
 }
