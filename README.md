@@ -1,4 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thumbnail Creator
+
+A powerful Next.js application for creating custom thumbnails with text overlays and background removal. Users can save their projects and access them later.
+
+## Features
+
+- **Background Removal**: Upload images and automatically remove backgrounds
+- **Text Overlay**: Add customizable text with various fonts, colors, and positioning
+- **Project Management**: Save and load your thumbnail projects
+- **User Authentication**: Secure login with Google OAuth
+- **Credit System**: Manage usage with a credit-based system
+- **Real-time Preview**: See your changes instantly
+
+## Project Save/Load Functionality
+
+Users can now:
+
+- **Save Projects**: Save their current work with a custom name and description
+- **Load Projects**: Access previously saved projects from a gallery view
+- **Delete Projects**: Remove projects they no longer need
+- **Project Gallery**: Browse all saved projects with previews
 
 ## Getting Started
 

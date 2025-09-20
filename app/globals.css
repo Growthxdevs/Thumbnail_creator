@@ -71,6 +71,17 @@ body {
   }
 }
 
+/* Dark mode button overrides */
+@layer components {
+  .dark .btn-outline {
+    @apply border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 hover:border-gray-500;
+  }
+
+  .dark .btn-outline-white {
+    @apply border-white/20 text-white bg-white/10 hover:bg-white/20 hover:border-white/30;
+  }
+}
+
 /* Base Button Styling */
 .glow-on-hover {
   position: relative;

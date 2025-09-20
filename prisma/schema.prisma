@@ -24,6 +24,7 @@ model User {
   // Relations
   accounts      Account[]
   sessions      Session[]
+  projects      Project[]
 }
 
 model Account {
@@ -59,4 +60,26 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Project {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Project data stored as JSON
+  projectData     Json     // Stores all editing parameters (text, positioning, colors, etc.)
+  
+  // Image data
+  originalImage   String?  // URL or base64 of original uploaded image
+  processedImage  String?  // URL or base64 of processed image (background removed)
+  finalImage      String?  // URL or base64 of final composition
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
