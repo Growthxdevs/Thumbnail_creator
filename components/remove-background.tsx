@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import ImagePreview from "./image-preview";
 import ImageControls from "./image-controls";
