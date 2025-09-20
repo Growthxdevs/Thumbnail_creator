@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth-server";
 import { db } from "@/lib/prisma";
+import { safeDbOperation } from "@/lib/db-utils";
 
 export async function POST(req: Request) {
   try {
@@ -19,9 +20,11 @@ export async function POST(req: Request) {
     }
 
     // Check if user has enough credits
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { credits: true },
+    const user = await safeDbOperation(async () => {
+      return await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { credits: true },
+      });
     });
 
     if (!user) {
@@ -40,17 +43,26 @@ export async function POST(req: Request) {
       );
     }
 
-    const updatedUser = await db.user.update({
-      where: { id: session.user.id },
-      data: {
-        credits: {
-          decrement: amount,
+    const updatedUser = await safeDbOperation(async () => {
+      return await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          credits: {
+            decrement: amount,
+          },
         },
-      },
-      select: {
-        credits: true,
-      },
+        select: {
+          credits: true,
+        },
+      });
     });
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { message: "Failed to update credits" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {

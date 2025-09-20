@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth-server";
 import { db } from "@/lib/prisma";
+import { safeDbOperation } from "@/lib/db-utils";
 
 export async function GET() {
   try {
@@ -9,15 +10,17 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        credits: true,
-        isPro: true,
-        subscriptionId: true,
-        email: true,
-        name: true,
-      },
+    const user = await safeDbOperation(async () => {
+      return await db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          credits: true,
+          isPro: true,
+          subscriptionId: true,
+          email: true,
+          name: true,
+        },
+      });
     });
 
     if (!user) {

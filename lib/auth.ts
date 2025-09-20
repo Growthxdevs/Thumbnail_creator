@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "./prisma";
+import { safeUserLookup, safeAccountCreate } from "./db-utils";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -39,20 +40,18 @@ export const authOptions: NextAuthOptions = {
 
             if (!existingAccount) {
               // Link the Google account to existing user
-              await db.account.create({
-                data: {
-                  userId: existingUser.id,
-                  type: account.type,
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                  access_token: account.access_token,
-                  refresh_token: account.refresh_token,
-                  expires_at: account.expires_at,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                  id_token: account.id_token,
-                  session_state: account.session_state,
-                },
+              await safeAccountCreate({
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state,
               });
               console.log(
                 "Linked Google account to existing user:",
@@ -69,20 +68,22 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       // Send properties to the client
-      if (session.user) {
+      if (session.user && token.id) {
         // For JWT strategy, user data comes from token
         session.user.id = token.id as string;
 
-        // Get user data from database
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { credits: true, isPro: true, subscriptionId: true },
-        });
+        try {
+          // Get user data from database with retry logic
+          const dbUser = await safeUserLookup(token.id as string);
 
-        if (dbUser) {
-          session.user.credits = dbUser.credits;
-          session.user.isPro = dbUser.isPro;
-          session.user.subscriptionId = dbUser.subscriptionId;
+          if (dbUser) {
+            session.user.credits = dbUser.credits;
+            session.user.isPro = dbUser.isPro;
+            session.user.subscriptionId = dbUser.subscriptionId;
+          }
+        } catch (error) {
+          console.error("Error fetching user data in session callback:", error);
+          // Don't throw error, just continue with basic session data
         }
       }
       return session;

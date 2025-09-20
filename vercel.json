@@ -15,6 +15,12 @@
   "functions": {
     "app/api/auth/[...nextauth]/route.ts": {
       "maxDuration": 30
+    },
+    "app/editor/page.tsx": {
+      "maxDuration": 30
     }
+  },
+  "env": {
+    "PRISMA_QUERY_ENGINE_LIBRARY": "1"
   }
 }
