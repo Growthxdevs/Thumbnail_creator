@@ -41,9 +41,14 @@
 
 import { NextResponse } from "next/server";
 import { Client } from "@gradio/client";
+import { getServerAuthSession } from "@/lib/auth-server";
 
 export async function POST(req: Request) {
-  // Auth removed - no authentication required
+  // Require authentication
+  const session = await getServerAuthSession();
+  if (!session) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
   const formData = await req.formData(); // Correct way to handle file uploads
   const imageFile = formData.get("image");
