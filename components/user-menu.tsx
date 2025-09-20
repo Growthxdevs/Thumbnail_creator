@@ -1,7 +1,8 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useCredits } from "@/contexts/credit-context";
+import { useCreditStore } from "@/stores/credit-store";
+import { useCreditInit } from "@/hooks/use-credit-init";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,7 +17,8 @@ import { LogOut, User, CreditCard } from "lucide-react";
 
 export default function UserMenu() {
   const { data: session } = useSession();
-  const { credits } = useCredits();
+  const { credits } = useCreditStore();
+  useCreditInit(); // Initialize credits from session
 
   if (!session) return null;
 

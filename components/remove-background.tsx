@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useCredits } from "@/contexts/credit-context";
+import { useCreditStore } from "@/stores/credit-store";
+import { useCreditInit } from "@/hooks/use-credit-init";
 import ImagePreview from "./image-preview";
 import ImageControls from "./image-controls";
 
@@ -11,7 +12,8 @@ import ImageControls from "./image-controls";
 
 export default function RemoveBackground() {
   const { data: session } = useSession();
-  const { credits, deductCredits } = useCredits();
+  const { credits, deductCredits } = useCreditStore();
+  useCreditInit(); // Initialize credits from session
   const [text, setText] = useState("Text");
   const [textSize, setTextSize] = useState(200);
   const [textColor, setTextColor] = useState("#ffffff");
