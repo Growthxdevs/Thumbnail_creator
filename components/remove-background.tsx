@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useCreditStore } from "@/stores/credit-store";
 import { useCreditInit } from "@/hooks/use-credit-init";
@@ -30,7 +30,7 @@ export default function RemoveBackground() {
   const [loading, setLoading] = useState(false);
   const [isCleared, setIsCleared] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { saveDialogRef, setCanSave } = useSaveProject();
+  const { setCanSave } = useSaveProject();
 
   const textPositionStyle = {
     left: `${horizontalPosition}%`,

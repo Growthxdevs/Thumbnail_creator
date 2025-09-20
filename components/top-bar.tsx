@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import UserMenu from "./user-menu";
 import LoginButton from "./login-button";
 import { useSaveProject } from "@/contexts/save-project-context";
@@ -10,6 +11,10 @@ import { Button } from "./ui/button";
 const TopBar = () => {
   const { data: session, status } = useSession();
   const { saveDialogRef, canSave } = useSaveProject();
+  const pathname = usePathname();
+
+  // Only show save button on editor page
+  const isEditorPage = pathname === "/editor";
 
   const handleSaveClick = () => {
     if (saveDialogRef.current) {
@@ -30,7 +35,7 @@ const TopBar = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          {session && (
+          {session && isEditorPage && (
             <Button
               onClick={handleSaveClick}
               variant="outline"
