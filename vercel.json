@@ -19,13 +19,5 @@
     "app/editor/page.tsx": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "PRISMA_QUERY_ENGINE_LIBRARY": "1"
-  },
-  "build": {
-    "env": {
-      "PRISMA_QUERY_ENGINE_LIBRARY": "1"
-    }
   }
 }
