@@ -62,9 +62,17 @@ function ImageControls({
   return (
     <div className="w-full md:w-2/5 backdrop-blur-md bg-white/5 p-6 rounded-lg shadow-2xl space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-white">
-          Available credits: <span className="text-yellow-300">{credits}</span>
-        </p>
+        <div className="flex flex-col">
+          <p className="text-white">
+            Available credits:{" "}
+            <span className="text-yellow-300 font-bold">{credits}</span>
+          </p>
+          {credits <= 0 && (
+            <p className="text-red-400 text-sm mt-1">
+              No credits available. Purchase more to download images.
+            </p>
+          )}
+        </div>
         <PlanModal />
       </div>
       {removeBgImage && (

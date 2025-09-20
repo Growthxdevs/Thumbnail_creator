@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useCredits } from "@/contexts/credit-context";
 import ImagePreview from "./image-preview";
 import ImageControls from "./image-controls";
 
@@ -8,6 +10,8 @@ import ImageControls from "./image-controls";
 // }
 
 export default function RemoveBackground() {
+  const { data: session } = useSession();
+  const { credits, deductCredits } = useCredits();
   const [text, setText] = useState("Text");
   const [textSize, setTextSize] = useState(200);
   const [textColor, setTextColor] = useState("#ffffff");
@@ -28,9 +32,38 @@ export default function RemoveBackground() {
     opacity: textOpacity,
     fontFamily: fontFamily,
   };
-  // Auth removed - using default values
-  const credits = 0; // Default credits
-  const isPro = false; // Default to free user
+
+  // Get user pro status from session
+  const isPro = session?.user?.isPro ?? false;
+
+  // Function to handle credit deduction
+  const handleCreditDeduction = async () => {
+    if (credits <= 0) {
+      return false; // No credits available
+    }
+
+    try {
+      const response = await fetch("/api/credits/deduct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount: 1 }),
+      });
+
+      if (response.ok) {
+        // Update credits in context (no session update needed)
+        deductCredits(1);
+        return true; // Credit deducted successfully
+      } else {
+        console.error("Failed to deduct credit");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error deducting credit:", error);
+      return false;
+    }
+  };
 
   return (
     <div className="w-full min-h-screen p-8">
@@ -66,6 +99,8 @@ export default function RemoveBackground() {
             setRemovedBgImage={setRemovedBgImage}
             isCleared={isCleared}
             setIsCleared={setIsCleared}
+            credits={credits}
+            onCreditDeduction={handleCreditDeduction}
           />
 
           {/* Right Side - Controls */}

@@ -17,6 +17,8 @@ type ImagePreviewProps = {
   setRemovedBgImage: (value: string) => void;
   isCleared: boolean;
   setIsCleared: (value: boolean) => void;
+  credits: number;
+  onCreditDeduction: () => Promise<boolean>;
 };
 
 function ImagePreview({
@@ -32,6 +34,8 @@ function ImagePreview({
   setRemovedBgImage,
   isCleared,
   setIsCleared,
+  credits,
+  onCreditDeduction,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
@@ -64,7 +68,53 @@ function ImagePreview({
       setLoading(false);
     }
   };
-  const handleDownload = async () => {
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check if user has credits
+    if (credits <= 0) {
+      // Use a more modern notification instead of alert
+      const notification = document.createElement("div");
+      notification.textContent =
+        "You don't have enough credits to download. Please purchase more credits.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
+      return;
+    }
+
+    // Deduct credit before download
+    const creditDeducted = await onCreditDeduction();
+    if (!creditDeducted) {
+      const notification = document.createElement("div");
+      notification.textContent = "Failed to deduct credit. Please try again.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
+      return;
+    }
+
     try {
       if (compositionRef.current) {
         const scale = 4;
@@ -87,7 +137,22 @@ function ImagePreview({
       }
     } catch (error) {
       console.error("Error generating image:", error);
-      alert("An error occurred while generating the image. Please try again.");
+      const notification = document.createElement("div");
+      notification.textContent =
+        "An error occurred while generating the image. Please try again.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
     }
   };
 
@@ -188,16 +253,23 @@ function ImagePreview({
         )}
       </div>
 
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 flex flex-col items-center gap-2">
         <Button
-          onClick={handleDownload}
-          disabled={!resultImage}
+          type="button"
+          onClick={(e) => handleDownload(e)}
+          disabled={!resultImage || credits <= 0}
           variant="outline"
-          className="flex items-center gap-2 bg-white/10 text-white border-white/20 hover:bg-white/20"
+          className="flex items-center gap-2 bg-white/10 text-white border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
-          Download Image
+          {credits <= 0 ? "No Credits Available" : "Download Image (1 Credit)"}
         </Button>
+        {credits <= 0 && resultImage && (
+          <p className="text-red-400 text-sm text-center">
+            You need at least 1 credit to download. Click &quot;Purchase
+            Credits&quot; to buy more.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import { useCredits } from "@/contexts/credit-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import { LogOut, User, CreditCard } from "lucide-react";
 
 export default function UserMenu() {
   const { data: session } = useSession();
+  const { credits } = useCredits();
 
   if (!session) return null;
 
@@ -41,7 +43,7 @@ export default function UserMenu() {
             </p>
             <div className="flex items-center space-x-2 mt-2">
               <Badge variant={user?.isPro ? "default" : "secondary"}>
-                {user?.credits} credits
+                {credits} credits
               </Badge>
               {user?.isPro && (
                 <Badge
