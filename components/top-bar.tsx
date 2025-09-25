@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import UserMenu from "./user-menu";
 import LoginButton from "./login-button";
 import { useSaveProject } from "@/contexts/save-project-context";
-import { Save } from "lucide-react";
+import { Save, Image, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 
 const TopBar = () => {
@@ -15,6 +15,7 @@ const TopBar = () => {
 
   // Only show save button on editor page
   const isEditorPage = pathname === "/editor";
+  const isThumbnailPage = pathname === "/thumbnail-generator";
 
   const handleSaveClick = () => {
     if (saveDialogRef.current) {
@@ -33,6 +34,34 @@ const TopBar = () => {
             Thumbnail Creator
           </Link>
         </div>
+
+        {/* Navigation Links */}
+        {session && (
+          <nav className="hidden md:flex items-center space-x-4">
+            <Link
+              href="/editor"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isEditorPage
+                  ? "bg-white/20 text-white"
+                  : "text-gray-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              <span>Editor</span>
+            </Link>
+            <Link
+              href="/thumbnail-generator"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isThumbnailPage
+                  ? "bg-white/20 text-white"
+                  : "text-gray-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI Generator</span>
+            </Link>
+          </nav>
+        )}
 
         <div className="flex items-center space-x-4">
           {session && isEditorPage && (
