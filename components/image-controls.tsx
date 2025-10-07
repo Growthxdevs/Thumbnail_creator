@@ -28,6 +28,14 @@ interface ImageControlsProps {
   setRemovedBgImage: (value: string) => void;
   setIsCleared: (value: boolean) => void;
   isPro: boolean;
+  outlineWidth: number;
+  setOutlineWidth: (value: number) => void;
+  outlineEnabled: boolean;
+  setOutlineEnabled: (value: boolean) => void;
+  outlineColor: string;
+  setOutlineColor: (value: string) => void;
+  outlineTransparency: number;
+  setOutlineTransparency: (value: number) => void;
 }
 
 function ImageControls({
@@ -55,6 +63,14 @@ function ImageControls({
   removeBgImage,
   setIsCleared,
   isPro,
+  outlineWidth,
+  setOutlineWidth,
+  outlineEnabled,
+  setOutlineEnabled,
+  outlineColor,
+  setOutlineColor,
+  outlineTransparency,
+  setOutlineTransparency,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
@@ -159,6 +175,90 @@ function ImageControls({
             className="w-28 p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+      </div>
+
+      {/* Outline Controls Section */}
+      <div className="border border-white/10 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-sm font-medium text-gray-200">Outline</label>
+          <button
+            type="button"
+            onClick={() => setOutlineEnabled(!outlineEnabled)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+              outlineEnabled ? "bg-blue-600" : "bg-gray-600"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                outlineEnabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        {outlineEnabled && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-2">
+                Outline Width: {outlineWidth}px
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.5"
+                value={outlineWidth}
+                onChange={(e) => setOutlineWidth(Number(e.target.value))}
+                className="w-full accent-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-2">
+                Outline Color
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="color"
+                  value={outlineColor}
+                  onChange={(e) => setOutlineColor(e.target.value)}
+                  className="w-12 h-8 rounded bg-transparent"
+                />
+                <input
+                  type="text"
+                  value={outlineColor}
+                  onChange={(e) => setOutlineColor(e.target.value)}
+                  className="w-28 p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {outlineColor !== textColor && (
+                  <button
+                    type="button"
+                    onClick={() => setOutlineColor(textColor)}
+                    className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
+                    title="Reset to text color"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-2">
+                Outline Transparency: {Math.round(outlineTransparency * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={outlineTransparency}
+                onChange={(e) => setOutlineTransparency(Number(e.target.value))}
+                className="w-full accent-blue-500"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div>

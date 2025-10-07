@@ -25,6 +25,10 @@ export default function RemoveBackground() {
   const [rotation, setRotation] = useState(0);
   const [textOpacity, setTextOpacity] = useState(1);
   const [fontFamily, setFontFamily] = useState("Arial");
+  const [outlineWidth, setOutlineWidth] = useState(2);
+  const [outlineEnabled, setOutlineEnabled] = useState(false);
+  const [outlineColor, setOutlineColor] = useState(textColor);
+  const [outlineTransparency, setOutlineTransparency] = useState(1);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [removedBgImage, setRemovedBgImage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +52,11 @@ export default function RemoveBackground() {
     const hasContent = removedBgImage && resultImage;
     setCanSave(!!hasContent);
   }, [removedBgImage, resultImage, setCanSave]);
+
+  // Sync outline color with text color when text color changes
+  useEffect(() => {
+    setOutlineColor(textColor);
+  }, [textColor]);
 
   // Function to handle credit deduction
   const handleCreditDeduction = async () => {
@@ -266,6 +275,10 @@ export default function RemoveBackground() {
             setIsCleared={setIsCleared}
             credits={credits}
             onCreditDeduction={handleCreditDeduction}
+            outlineWidth={outlineWidth}
+            outlineEnabled={outlineEnabled}
+            outlineColor={outlineColor}
+            outlineTransparency={outlineTransparency}
           />
 
           {/* Right Side - Controls */}
@@ -293,6 +306,14 @@ export default function RemoveBackground() {
             setRotation={setRotation}
             setIsCleared={setIsCleared}
             isPro={isPro}
+            outlineWidth={outlineWidth}
+            setOutlineWidth={setOutlineWidth}
+            outlineEnabled={outlineEnabled}
+            setOutlineEnabled={setOutlineEnabled}
+            outlineColor={outlineColor}
+            setOutlineColor={setOutlineColor}
+            outlineTransparency={outlineTransparency}
+            setOutlineTransparency={setOutlineTransparency}
           />
         </div>
       </div>

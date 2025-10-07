@@ -20,6 +20,10 @@ type ImagePreviewProps = {
   setIsCleared: (value: boolean) => void;
   credits: number;
   onCreditDeduction: () => Promise<boolean>;
+  outlineWidth: number;
+  outlineEnabled: boolean;
+  outlineColor: string;
+  outlineTransparency: number;
 };
 
 function ImagePreview({
@@ -37,6 +41,10 @@ function ImagePreview({
   setIsCleared,
   credits,
   onCreditDeduction,
+  outlineWidth,
+  outlineEnabled,
+  outlineColor,
+  outlineTransparency,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
@@ -206,6 +214,30 @@ function ImagePreview({
             className="object-contain"
             unoptimized
           />
+        )}
+
+        {/* Outline text above removeBgImage */}
+        {removedBgImage && !isCleared && outlineEnabled && (
+          <div
+            className="absolute flex items-center justify-center w-full"
+            style={{
+              ...textPositionStyle,
+              zIndex: 30,
+            }}
+          >
+            <h1
+              className="font-bold"
+              style={{
+                fontSize: `${textSize}px`,
+                color: "rgba(0,0,0,0)",
+                WebkitTextStroke: `${outlineWidth}px ${outlineColor}`,
+                textShadow: "none",
+                opacity: outlineTransparency,
+              }}
+            >
+              {text}
+            </h1>
+          </div>
         )}
 
         {resultImage && !isCleared && (
