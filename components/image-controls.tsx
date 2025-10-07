@@ -27,6 +27,9 @@ interface ImageControlsProps {
   removeBgImage: string;
   setRemovedBgImage: (value: string) => void;
   setIsCleared: (value: boolean) => void;
+  setIsGenerated: (value: boolean) => void;
+  setOriginalFile: (file: File | null) => void;
+  setResetFileInput: React.Dispatch<React.SetStateAction<number>>;
   isPro: boolean;
   outlineWidth: number;
   setOutlineWidth: (value: number) => void;
@@ -62,6 +65,9 @@ function ImageControls({
   setRemovedBgImage,
   removeBgImage,
   setIsCleared,
+  setIsGenerated,
+  setOriginalFile,
+  setResetFileInput,
   isPro,
   outlineWidth,
   setOutlineWidth,
@@ -92,7 +98,7 @@ function ImageControls({
         <PlanModal />
       </div>
       {removeBgImage && (
-        <div>
+        <div className="flex gap-2">
           <Button
             variant="destructive"
             className="flex items-center gap-2"
@@ -101,12 +107,16 @@ function ImageControls({
               setResultImage(null);
               setRemovedBgImage("");
               setLoading(false);
+              setIsGenerated(false); // Reset generated state
+              setOriginalFile(null); // Reset original file
+              setResetFileInput((prev: number) => prev + 1); // Trigger file input reset
             }}
           >
             Clear
           </Button>
         </div>
       )}
+
       <div>
         <label className="block text-sm font-medium text-gray-200 mb-2">
           Text Content

@@ -34,6 +34,9 @@ export default function RemoveBackground() {
   const [loading, setLoading] = useState(false);
   const [isCleared, setIsCleared] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isGenerated, setIsGenerated] = useState(false);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
+  const [resetFileInput, setResetFileInput] = useState(0);
   const { setCanSave } = useSaveProject();
 
   const textPositionStyle = {
@@ -89,6 +92,121 @@ export default function RemoveBackground() {
     } catch (error) {
       console.error("Error deducting credit:", error);
       return false;
+    }
+  };
+
+  // Function to handle generate action
+  const handleGenerate = async () => {
+    if (credits <= 0) {
+      const notification = document.createElement("div");
+      notification.textContent =
+        "You don't have enough credits to generate. Please purchase more credits.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
+      return;
+    }
+
+    if (!originalFile) {
+      const notification = document.createElement("div");
+      notification.textContent = "No image file available for processing.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
+      return;
+    }
+
+    const creditDeducted = await handleCreditDeduction();
+    if (creditDeducted) {
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append("image", originalFile);
+
+        const response = await fetch("/api/removeBg", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setResultImage(data.image);
+          setIsGenerated(true);
+          const notification = document.createElement("div");
+          notification.textContent =
+            "Image generated successfully! You can now download for free.";
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => document.body.removeChild(notification), 3000);
+        } else {
+          throw new Error("Failed to process image");
+        }
+      } catch (error) {
+        console.error("Error processing image:", error);
+        const notification = document.createElement("div");
+        notification.textContent = "Failed to process image. Please try again.";
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #ef4444;
+          color: white;
+          padding: 12px 16px;
+          border-radius: 8px;
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => document.body.removeChild(notification), 5000);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const notification = document.createElement("div");
+      notification.textContent = "Failed to deduct credit. Please try again.";
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 5000);
     }
   };
 
@@ -262,10 +380,8 @@ export default function RemoveBackground() {
           {/* Left Side - Image Preview */}
           <ImagePreview
             loading={loading}
-            setLoading={setLoading}
             textPositionStyle={textPositionStyle}
             resultImage={resultImage}
-            setResultImage={setResultImage}
             text={text}
             textSize={textSize}
             textColor={textColor}
@@ -275,6 +391,10 @@ export default function RemoveBackground() {
             setIsCleared={setIsCleared}
             credits={credits}
             onCreditDeduction={handleCreditDeduction}
+            isGenerated={isGenerated}
+            onGenerate={handleGenerate}
+            setOriginalFile={setOriginalFile}
+            resetFileInput={resetFileInput}
             outlineWidth={outlineWidth}
             outlineEnabled={outlineEnabled}
             outlineColor={outlineColor}
@@ -305,6 +425,9 @@ export default function RemoveBackground() {
             setRemovedBgImage={setRemovedBgImage}
             setRotation={setRotation}
             setIsCleared={setIsCleared}
+            setIsGenerated={setIsGenerated}
+            setOriginalFile={setOriginalFile}
+            setResetFileInput={setResetFileInput}
             isPro={isPro}
             outlineWidth={outlineWidth}
             setOutlineWidth={setOutlineWidth}
