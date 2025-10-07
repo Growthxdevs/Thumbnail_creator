@@ -34,9 +34,6 @@ const TextBehindImage = () => {
     router.push("/editor");
   };
 
-  const handleOpenThumbnailGenerator = () => {
-    router.push("/thumbnail-generator");
-  };
   return (
     <div className="py-16 flex flex-col items-center text-center px-6">
       {/* Hero Section with Full-Width Image */}
@@ -55,13 +52,6 @@ const TextBehindImage = () => {
             className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-blue-500 text-white px-10 py-4 rounded-lg transition transform hover:scale-105"
           >
             Open the App
-            <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
-          </Button>
-          <Button
-            onClick={handleOpenThumbnailGenerator}
-            className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-purple-500 text-white px-10 py-4 rounded-lg transition transform hover:scale-105"
-          >
-            AI Thumbnail Generator
             <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
           </Button>
         </motion.div>

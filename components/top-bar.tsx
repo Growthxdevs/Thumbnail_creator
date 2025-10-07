@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import UserMenu from "./user-menu";
 import LoginButton from "./login-button";
 import { useSaveProject } from "@/contexts/save-project-context";
-import { Save, Image, Sparkles } from "lucide-react";
+import { Save, Image } from "lucide-react";
 import { Button } from "./ui/button";
 
 const TopBar = () => {
@@ -15,7 +15,6 @@ const TopBar = () => {
 
   // Only show save button on editor page
   const isEditorPage = pathname === "/editor";
-  const isThumbnailPage = pathname === "/thumbnail-generator";
 
   const handleSaveClick = () => {
     if (saveDialogRef.current) {
@@ -46,19 +45,9 @@ const TopBar = () => {
                   : "text-gray-300 hover:text-white hover:bg-white/10"
               }`}
             >
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-4 h-4" />
               <span>Editor</span>
-            </Link>
-            <Link
-              href="/thumbnail-generator"
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isThumbnailPage
-                  ? "bg-white/20 text-white"
-                  : "text-gray-300 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>AI Generator</span>
             </Link>
           </nav>
         )}
