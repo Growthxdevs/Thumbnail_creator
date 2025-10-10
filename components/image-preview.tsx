@@ -27,6 +27,8 @@ type ImagePreviewProps = {
   outlineTransparency: number;
   setHorizontalPosition: (value: number) => void;
   setVerticalPosition: (value: number) => void;
+  horizontalPosition: number;
+  verticalPosition: number;
 };
 
 function ImagePreview({
@@ -52,10 +54,13 @@ function ImagePreview({
   outlineTransparency,
   setHorizontalPosition,
   setVerticalPosition,
+  horizontalPosition,
+  verticalPosition,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +77,19 @@ function ImagePreview({
     // Only allow dragging if there's an image and text to position
     if (!removedBgImage || isCleared || !text) return;
 
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Calculate current text position in pixels
+    const currentTextX = (horizontalPosition / 100) * rect.width;
+    const currentTextY = (verticalPosition / 100) * rect.height;
+
+    // Calculate offset from mouse to text center
+    const offsetX = mouseX - currentTextX;
+    const offsetY = mouseY - currentTextY;
+
+    setDragOffset({ x: offsetX, y: offsetY });
     setIsDragging(true);
 
     // Prevent text selection during drag
@@ -83,12 +101,16 @@ function ImagePreview({
     if (!isDragging || !removedBgImage || isCleared || !text) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Apply offset to get the actual text position
+    const textX = mouseX - dragOffset.x;
+    const textY = mouseY - dragOffset.y;
 
     // Convert to percentages (0-100)
-    const horizontalPercent = Math.round((x / rect.width) * 100);
-    const verticalPercent = Math.round((y / rect.height) * 100);
+    const horizontalPercent = (textX / rect.width) * 100;
+    const verticalPercent = (textY / rect.height) * 100;
 
     // Clamp values between 0 and 100
     const clampedHorizontal = Math.max(0, Math.min(100, horizontalPercent));

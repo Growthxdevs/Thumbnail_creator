@@ -401,6 +401,8 @@ export default function RemoveBackground() {
             outlineTransparency={outlineTransparency}
             setHorizontalPosition={setHorizontalPosition}
             setVerticalPosition={setVerticalPosition}
+            horizontalPosition={horizontalPosition}
+            verticalPosition={verticalPosition}
           />
 
           {/* Right Side - Controls */}
