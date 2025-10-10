@@ -25,6 +25,8 @@ type ImagePreviewProps = {
   outlineEnabled: boolean;
   outlineColor: string;
   outlineTransparency: number;
+  setHorizontalPosition: (value: number) => void;
+  setVerticalPosition: (value: number) => void;
 };
 
 function ImagePreview({
@@ -48,9 +50,12 @@ function ImagePreview({
   outlineEnabled,
   outlineColor,
   outlineTransparency,
+  setHorizontalPosition,
+  setVerticalPosition,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +65,47 @@ function ImagePreview({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // Function to handle mouse down for starting drag
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only allow dragging if there's an image and text to position
+    if (!removedBgImage || isCleared || !text) return;
+
+    setIsDragging(true);
+
+    // Prevent text selection during drag
+    e.preventDefault();
+  };
+
+  // Function to handle mouse move during drag
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !removedBgImage || isCleared || !text) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Convert to percentages (0-100)
+    const horizontalPercent = Math.round((x / rect.width) * 100);
+    const verticalPercent = Math.round((y / rect.height) * 100);
+
+    // Clamp values between 0 and 100
+    const clampedHorizontal = Math.max(0, Math.min(100, horizontalPercent));
+    const clampedVertical = Math.max(0, Math.min(100, verticalPercent));
+
+    setHorizontalPosition(clampedHorizontal);
+    setVerticalPosition(clampedVertical);
+  };
+
+  // Function to handle mouse up to end drag
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Function to handle mouse leave to end drag
+  const handleMouseLeave = () => {
+    setIsDragging(false);
   };
 
   // Call resetInput when resetFileInput prop changes
@@ -189,11 +235,26 @@ function ImagePreview({
     <div className="w-full md:w-3/5 backdrop-blur-md bg-white/5 rounded-lg shadow-2xl p-4 flex flex-col gap-4 items-center">
       <div
         ref={compositionRef}
-        className="relative flex min-h-[400px] items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden w-full"
+        className={`relative flex min-h-[400px] items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden w-full select-none ${
+          removedBgImage && !isCleared && text
+            ? isDragging
+              ? "cursor-grabbing"
+              : "cursor-grab"
+            : "cursor-default"
+        }`}
         style={{
           width: imageWidth ? `${imageWidth}px` : "100%",
           height: imageHeight ? `${imageHeight}px` : "400px",
         }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        title={
+          removedBgImage && !isCleared && text
+            ? "Click and drag to position text"
+            : ""
+        }
       >
         {loading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -216,7 +277,9 @@ function ImagePreview({
         {/* Outline text above removeBgImage */}
         {removedBgImage && !isCleared && outlineEnabled && (
           <div
-            className="absolute flex items-center justify-center w-full"
+            className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
+              isDragging ? "scale-105 drop-shadow-lg" : ""
+            }`}
             style={{
               ...textPositionStyle,
               zIndex: 30,
@@ -239,7 +302,9 @@ function ImagePreview({
 
         {resultImage && !isCleared && (
           <div
-            className="absolute flex items-center justify-center z-10 w-full"
+            className={`absolute flex items-center justify-center z-10 w-full transition-all duration-150 ${
+              isDragging ? "scale-105 drop-shadow-lg" : ""
+            }`}
             style={textPositionStyle}
           >
             <h1
