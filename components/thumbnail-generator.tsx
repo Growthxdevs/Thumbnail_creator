@@ -1,6 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import React, { useState } from "react";
 import { useCreditStore } from "@/stores/credit-store";
 import { useCreditInit } from "@/hooks/use-credit-init";
 import ThumbnailUpload from "./thumbnail-upload";
@@ -9,7 +8,6 @@ import ThumbnailPreview from "./thumbnail-preview";
 import { ThumbnailTemplate } from "@/types/thumbnail";
 
 export default function ThumbnailGenerator() {
-  const { data: session } = useSession();
   const { credits, deductCredits } = useCreditStore();
   useCreditInit(); // Initialize credits from session
 
@@ -20,9 +18,6 @@ export default function ThumbnailGenerator() {
     null
   );
   const [loading, setLoading] = useState(false);
-
-  // Get user pro status from session
-  const isPro = session?.user?.isPro ?? false;
 
   // Function to handle credit deduction
   const handleCreditDeduction = async () => {
@@ -76,7 +71,6 @@ export default function ThumbnailGenerator() {
       if (response.ok) {
         const data = await response.json();
         setGeneratedThumbnail(data.thumbnail);
-        setCurrentStep("preview");
       } else {
         throw new Error("Failed to generate thumbnail");
       }
@@ -123,10 +117,10 @@ export default function ThumbnailGenerator() {
       <div className="relative max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 font-dancing">
+          <h1 className="text-4xl font-bold dark-glow-text mb-4 font-dancing">
             AI Thumbnail Generator
           </h1>
-          <p className="text-gray-300 text-lg">
+          <p className="text-dark-text-secondary text-lg">
             Create stunning thumbnails for YouTube and Reels with AI-powered
             templates
           </p>

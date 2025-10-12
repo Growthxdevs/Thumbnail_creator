@@ -224,12 +224,12 @@ export default function TemplateSelector({
         {filteredTemplates.map((template) => (
           <div
             key={template.id}
-            className={`relative backdrop-blur-md bg-white/5 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-all ${
+            className={`relative backdrop-blur-md dark-card-bg rounded-lg shadow-lg overflow-hidden cursor-pointer transition-all ${
               compact ? "p-2" : "p-0"
             } ${
               selectedTemplate?.id === template.id
-                ? "ring-2 ring-blue-500 bg-blue-500/10"
-                : "hover:bg-white/10"
+                ? "ring-2 ring-dark-accent-primary bg-dark-accent-primary/10"
+                : "hover:bg-dark-bg-secondary/50"
             }`}
             onClick={() => onTemplateSelect(template)}
           >

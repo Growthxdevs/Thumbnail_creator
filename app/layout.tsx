@@ -36,7 +36,7 @@ export default function RootLayout({
       >
         <Providers>
           {
-            <div className="bg-gradient-to-br from-black via-gray-900 to-black ">
+            <div className="dark-gradient-bg min-h-screen">
               <TopBar />
               {children}
             </div>

@@ -38,7 +38,7 @@ const TextBehindImage = () => {
     <div className="py-16 flex flex-col items-center text-center px-6">
       {/* Hero Section with Full-Width Image */}
       <div className="flex flex-col items-center justify-center">
-        <h1 className="text-white text-4xl md:text-6xl font-dancing font-black text-center px-6 drop-shadow-2xl leading-tight tracking-wide">
+        <h1 className="dark-glow-text text-4xl md:text-6xl font-dancing font-black text-center px-6 drop-shadow-2xl leading-tight tracking-wide">
           Weave Stories Through Sight
         </h1>
         <motion.div

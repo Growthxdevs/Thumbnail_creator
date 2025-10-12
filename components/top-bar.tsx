@@ -23,12 +23,12 @@ const TopBar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-black/30">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-dark-bg-secondary/80 border-b border-dark-border">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="mr-4">
           <Link
             href="/"
-            className="text-2xl font-extrabold text-white font-dancing"
+            className="text-2xl font-extrabold dark-glow-text font-dancing"
           >
             Thumbnail Creator
           </Link>

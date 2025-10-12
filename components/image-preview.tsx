@@ -254,7 +254,7 @@ function ImagePreview({
     setImageHeight(newHeight);
   };
   return (
-    <div className="w-full md:w-3/5 backdrop-blur-md bg-white/5 rounded-lg shadow-2xl p-4 flex flex-col gap-4 items-center">
+    <div className="w-full md:w-3/5 backdrop-blur-md dark-card-bg rounded-lg shadow-2xl p-4 flex flex-col gap-4 items-center">
       <div
         ref={compositionRef}
         className={`relative flex min-h-[400px] items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden w-full select-none ${

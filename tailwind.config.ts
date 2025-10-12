@@ -56,6 +56,25 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // Netflix Dark Theme Colors
+        dark: {
+          bg: {
+            primary: "var(--dark-bg-primary)",
+            secondary: "var(--dark-bg-secondary)",
+          },
+          text: {
+            primary: "var(--dark-text-primary)",
+            secondary: "var(--dark-text-secondary)",
+            muted: "var(--dark-text-muted)",
+          },
+          accent: {
+            primary: "var(--dark-accent-primary)",
+            secondary: "var(--dark-accent-secondary)",
+            glow: "var(--dark-accent-glow)",
+          },
+          border: "var(--dark-border)",
+          shadow: "var(--dark-shadow)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

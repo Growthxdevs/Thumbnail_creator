@@ -118,7 +118,7 @@ function ImageControls({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Text Content
         </label>
         <input
@@ -130,7 +130,7 @@ function ImageControls({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Font
         </label>
         <select
@@ -154,7 +154,7 @@ function ImageControls({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Text Size: {textSize}px
         </label>
         <input
@@ -163,12 +163,12 @@ function ImageControls({
           max="500"
           value={textSize}
           onChange={(e) => setTextSize(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Text Color
         </label>
         <div className="flex items-center gap-4">
@@ -209,7 +209,7 @@ function ImageControls({
         {outlineEnabled && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-dark-text-secondary mb-2">
                 Outline Width: {outlineWidth}px
               </label>
               <input
@@ -219,12 +219,12 @@ function ImageControls({
                 step="0.5"
                 value={outlineWidth}
                 onChange={(e) => setOutlineWidth(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                className="w-full accent-dark-accent-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-dark-text-secondary mb-2">
                 Outline Color
               </label>
               <div className="flex items-center gap-4">
@@ -254,7 +254,7 @@ function ImageControls({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-dark-text-secondary mb-2">
                 Outline Transparency: {Math.round(outlineTransparency * 100)}%
               </label>
               <input
@@ -264,7 +264,7 @@ function ImageControls({
                 step="0.01"
                 value={outlineTransparency}
                 onChange={(e) => setOutlineTransparency(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                className="w-full accent-dark-accent-primary"
               />
             </div>
           </div>
@@ -272,7 +272,7 @@ function ImageControls({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Text Opacity: {Math.round(textOpacity * 100)}%
         </label>
         <input
@@ -282,13 +282,13 @@ function ImageControls({
           step="0.01"
           value={textOpacity}
           onChange={(e) => setTextOpacity(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
-          Horizontal Position: {horizontalPosition}%
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+          Horizontal Position: {Math.round(horizontalPosition)}%
         </label>
         <input
           type="range"
@@ -296,13 +296,13 @@ function ImageControls({
           max="100"
           value={horizontalPosition}
           onChange={(e) => setHorizontalPosition(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
-          Vertical Position: {verticalPosition}%
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+          Vertical Position: {Math.round(verticalPosition)}%
         </label>
         <input
           type="range"
@@ -310,12 +310,12 @@ function ImageControls({
           max="100"
           value={verticalPosition}
           onChange={(e) => setVerticalPosition(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Rotation: {`${rotation}\u00B0`}
         </label>
         <input
@@ -324,7 +324,7 @@ function ImageControls({
           max="180"
           value={rotation}
           onChange={(e) => setRotation(Number(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full accent-dark-accent-primary"
         />
       </div>
     </div>
