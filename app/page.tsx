@@ -49,7 +49,7 @@ const TextBehindImage = () => {
         >
           <Button
             onClick={handleOpenApp}
-            className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-blue-500 text-white px-10 py-4 rounded-lg transition transform hover:scale-105"
+            className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-blue-500 text-white !text-white px-10 py-4 rounded-lg transition transform hover:scale-105"
           >
             Open the App
             <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />

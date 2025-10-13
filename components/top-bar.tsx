@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import UserMenu from "./user-menu";
 import LoginButton from "./login-button";
 import { useSaveProject } from "@/contexts/save-project-context";
-import { Save, Image } from "lucide-react";
+import { Save } from "lucide-react";
 import { Button } from "./ui/button";
 
 const TopBar = () => {
