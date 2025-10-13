@@ -25,6 +25,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   projects      Project[]
+  payments      Payment[]
 }
 
 model Account {
@@ -82,4 +83,24 @@ model Project {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  userId            String
+  razorpayOrderId   String?  @unique
+  razorpayPaymentId String?  @unique
+  razorpaySignature String?
+  amount            Int      // Amount in paise
+  currency          String   @default("INR")
+  status            String   // pending, captured, failed, refunded
+  planType          String   @default("pro")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
 }

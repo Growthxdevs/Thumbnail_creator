@@ -12,9 +12,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles } from "lucide-react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import RazorpayPayment from "./razorpay-payment";
+import PaymentSuccess from "./payment-success";
 
 export default function PlanModal() {
   const [open, setOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [successPaymentId, setSuccessPaymentId] = useState<string>("");
+
+  const handlePaymentSuccess = (paymentId: string) => {
+    console.log("Payment successful:", paymentId);
+    setSuccessPaymentId(paymentId);
+    setPaymentSuccess(true);
+    setOpen(false);
+  };
+
+  const handlePaymentError = (error: any) => {
+    console.error("Payment error:", error);
+    // You can add error handling here
+    // For example, show an error message
+  };
 
   return (
     <PayPalScriptProvider
@@ -128,29 +145,57 @@ export default function PlanModal() {
                   ))}
                 </div>
 
-                {/* PayPal Subscription Button */}
-                <PayPalButtons
-                  createSubscription={(data, actions) => {
-                    const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || "";
+                {/* Payment Options */}
+                <div className="space-y-3">
+                  {/* PayPal Subscription Button */}
+                  <PayPalButtons
+                    createSubscription={(data, actions) => {
+                      const planId =
+                        process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || "";
 
-                    return actions.subscription.create({
-                      plan_id: planId,
-                    });
-                  }}
-                  onApprove={(data) => {
-                    console.log("Subscription successful!", data);
-                    // Here, send the subscription data to your backend for further processing.
-                    return Promise.resolve();
-                  }}
-                  onError={(err) => {
-                    console.error("PayPal Error:", err);
-                  }}
-                />
+                      return actions.subscription.create({
+                        plan_id: planId,
+                      });
+                    }}
+                    onApprove={(data) => {
+                      console.log("Subscription successful!", data);
+                      // Here, send the subscription data to your backend for further processing.
+                      return Promise.resolve();
+                    }}
+                    onError={(err) => {
+                      console.error("PayPal Error:", err);
+                    }}
+                  />
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or</span>
+                    </div>
+                  </div>
+
+                  {/* Razorpay Payment Button */}
+                  <RazorpayPayment
+                    planType="pro"
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Success Modal */}
+      <PaymentSuccess
+        open={paymentSuccess}
+        onClose={() => setPaymentSuccess(false)}
+        paymentId={successPaymentId}
+      />
     </PayPalScriptProvider>
   );
 }
