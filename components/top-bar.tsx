@@ -34,8 +34,8 @@ const TopBar = () => {
           </Link>
         </div>
 
-        {/* Navigation Links */}
-        {session && (
+        {/* Navigation Links - Editor button disabled */}
+        {/* {session && (
           <nav className="hidden md:flex items-center space-x-4">
             <Link
               href="/editor"
@@ -45,12 +45,11 @@ const TopBar = () => {
                   : "text-gray-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-4 h-4" />
               <span>Editor</span>
             </Link>
           </nav>
-        )}
+        )} */}
 
         <div className="flex items-center space-x-4">
           {session && isEditorPage && (
