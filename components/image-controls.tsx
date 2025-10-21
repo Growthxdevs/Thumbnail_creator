@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
 import PlanModal from "./plan-modal";
 import { fonts } from "@/lib/fonts";
 
@@ -39,6 +40,8 @@ interface ImageControlsProps {
   setOutlineColor: (value: string) => void;
   outlineTransparency: number;
   setOutlineTransparency: (value: number) => void;
+  lineHeight: number;
+  setLineHeight: (value: number) => void;
 }
 
 function ImageControls({
@@ -77,6 +80,8 @@ function ImageControls({
   setOutlineColor,
   outlineTransparency,
   setOutlineTransparency,
+  lineHeight,
+  setLineHeight,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
@@ -121,11 +126,12 @@ function ImageControls({
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
           Text Content
         </label>
-        <input
-          type="text"
+        <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="w-full p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Enter your text content here..."
+          rows={3}
         />
       </div>
 
@@ -163,6 +169,21 @@ function ImageControls({
           max="500"
           value={textSize}
           onChange={(e) => setTextSize(Number(e.target.value))}
+          className="w-full accent-dark-accent-primary"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+          Line Height: {lineHeight.toFixed(1)}
+        </label>
+        <input
+          type="range"
+          min="0.8"
+          max="3.0"
+          step="0.1"
+          value={lineHeight}
+          onChange={(e) => setLineHeight(Number(e.target.value))}
           className="w-full accent-dark-accent-primary"
         />
       </div>

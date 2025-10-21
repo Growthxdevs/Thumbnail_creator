@@ -29,6 +29,7 @@ type ImagePreviewProps = {
   setVerticalPosition: (value: number) => void;
   horizontalPosition: number;
   verticalPosition: number;
+  lineHeight: number;
 };
 
 function ImagePreview({
@@ -56,6 +57,7 @@ function ImagePreview({
   setVerticalPosition,
   horizontalPosition,
   verticalPosition,
+  lineHeight,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
@@ -308,13 +310,14 @@ function ImagePreview({
             }}
           >
             <h1
-              className="font-bold"
+              className="font-bold whitespace-pre-line"
               style={{
                 fontSize: `${textSize}px`,
                 color: "rgba(0,0,0,0)",
                 WebkitTextStroke: `${outlineWidth}px ${outlineColor}`,
                 textShadow: "none",
                 opacity: outlineTransparency,
+                lineHeight: lineHeight,
               }}
             >
               {text}
@@ -330,10 +333,11 @@ function ImagePreview({
             style={textPositionStyle}
           >
             <h1
-              className="font-bold"
+              className="font-bold whitespace-pre-line"
               style={{
                 fontSize: `${textSize}px`,
                 color: textColor,
+                lineHeight: lineHeight,
               }}
             >
               {text}

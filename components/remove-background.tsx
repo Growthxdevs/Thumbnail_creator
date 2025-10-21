@@ -29,6 +29,7 @@ export default function RemoveBackground() {
   const [outlineEnabled, setOutlineEnabled] = useState(false);
   const [outlineColor, setOutlineColor] = useState(textColor);
   const [outlineTransparency, setOutlineTransparency] = useState(1);
+  const [lineHeight, setLineHeight] = useState(1.2);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [removedBgImage, setRemovedBgImage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -403,6 +404,7 @@ export default function RemoveBackground() {
             setVerticalPosition={setVerticalPosition}
             horizontalPosition={horizontalPosition}
             verticalPosition={verticalPosition}
+            lineHeight={lineHeight}
           />
 
           {/* Right Side - Controls */}
@@ -441,6 +443,8 @@ export default function RemoveBackground() {
             setOutlineColor={setOutlineColor}
             outlineTransparency={outlineTransparency}
             setOutlineTransparency={setOutlineTransparency}
+            lineHeight={lineHeight}
+            setLineHeight={setLineHeight}
           />
         </div>
       </div>
