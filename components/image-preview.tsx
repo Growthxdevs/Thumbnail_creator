@@ -30,6 +30,9 @@ type ImagePreviewProps = {
   horizontalPosition: number;
   verticalPosition: number;
   lineHeight: number;
+  textAlign: "left" | "center" | "right";
+  textShadow: number;
+  textAboveImage: boolean;
 };
 
 function ImagePreview({
@@ -58,6 +61,9 @@ function ImagePreview({
   horizontalPosition,
   verticalPosition,
   lineHeight,
+  textAlign,
+  textShadow,
+  textAboveImage,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
@@ -318,6 +324,7 @@ function ImagePreview({
                 textShadow: "none",
                 opacity: outlineTransparency,
                 lineHeight: lineHeight,
+                textAlign: textAlign,
               }}
             >
               {text}
@@ -327,10 +334,13 @@ function ImagePreview({
 
         {resultImage && !isCleared && (
           <div
-            className={`absolute flex items-center justify-center z-10 w-full transition-all duration-150 ${
+            className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
               isDragging ? "scale-105 drop-shadow-lg" : ""
             }`}
-            style={textPositionStyle}
+            style={{
+              ...textPositionStyle,
+              zIndex: textAboveImage ? 30 : 5,
+            }}
           >
             <h1
               className="font-bold whitespace-pre-line"
@@ -338,6 +348,13 @@ function ImagePreview({
                 fontSize: `${textSize}px`,
                 color: textColor,
                 lineHeight: lineHeight,
+                textAlign: textAlign,
+                textShadow:
+                  textShadow > 0
+                    ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
+                        textShadow * 0.5
+                      }px rgba(0,0,0,0.3)`
+                    : "none",
               }}
             >
               {text}

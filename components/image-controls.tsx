@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import PlanModal from "./plan-modal";
 import { fonts } from "@/lib/fonts";
+import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 interface ImageControlsProps {
   setLoading: (value: boolean) => void;
@@ -42,6 +43,12 @@ interface ImageControlsProps {
   setOutlineTransparency: (value: number) => void;
   lineHeight: number;
   setLineHeight: (value: number) => void;
+  textAlign: "left" | "center" | "right";
+  setTextAlign: (value: "left" | "center" | "right") => void;
+  textShadow: number;
+  setTextShadow: (value: number) => void;
+  textAboveImage: boolean;
+  setTextAboveImage: (value: boolean) => void;
 }
 
 function ImageControls({
@@ -82,6 +89,12 @@ function ImageControls({
   setOutlineTransparency,
   lineHeight,
   setLineHeight,
+  textAlign,
+  setTextAlign,
+  textShadow,
+  setTextShadow,
+  textAboveImage,
+  setTextAboveImage,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
@@ -186,6 +199,67 @@ function ImageControls({
           onChange={(e) => setLineHeight(Number(e.target.value))}
           className="w-full accent-dark-accent-primary"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+          Text Alignment
+        </label>
+        <div className="flex space-x-2">
+          {[
+            { value: "left", icon: AlignLeft },
+            { value: "center", icon: AlignCenter },
+            { value: "right", icon: AlignRight },
+          ].map((alignment) => (
+            <button
+              key={alignment.value}
+              onClick={() =>
+                setTextAlign(alignment.value as "left" | "center" | "right")
+              }
+              className={`flex-1 px-3 py-2 rounded-md font-medium transition-colors ${
+                textAlign === alignment.value
+                  ? "bg-blue-500 text-white"
+                  : "bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white"
+              }`}
+            >
+              <alignment.icon className="w-4 h-4 mr-1 inline" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+          Text Shadow: {textShadow}px
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="20"
+          step="1"
+          value={textShadow}
+          onChange={(e) => setTextShadow(Number(e.target.value))}
+          className="w-full accent-dark-accent-primary"
+        />
+      </div>
+
+      <div>
+        <label className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            checked={textAboveImage}
+            onChange={(e) => setTextAboveImage(e.target.checked)}
+            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+          />
+          <span className="text-sm font-medium text-dark-text-secondary">
+            Text Above Image
+          </span>
+        </label>
+        <p className="text-xs text-gray-400 mt-1">
+          {textAboveImage
+            ? "Text appears on top of the image"
+            : "Text appears behind the image"}
+        </p>
       </div>
 
       <div>
