@@ -114,7 +114,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Option 2: Remove.bg FREE tier (50 images/month, ~3-8 seconds)
+    // Option 3: Remove.bg FREE tier (50 images/month, ~3-8 seconds)
     if (!resultImage && process.env.REMOVE_BG_API_KEY) {
       try {
         const response = await axios.post(
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Option 3: Photoroom API (FREE - 50 images/month, ~5-10 seconds)
+    // Option 4: Photoroom API (FREE - 50 images/month, ~5-10 seconds)
     if (!resultImage && process.env.PHOTOROOM_API_KEY) {
       try {
         const response = await axios.post(

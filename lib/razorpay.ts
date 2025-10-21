@@ -1,15 +1,34 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
+// Validate required environment variables
+const validateRazorpayConfig = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error(
+      `Missing required Razorpay environment variables. Please set:
+      - RAZORPAY_KEY_ID
+      - RAZORPAY_KEY_SECRET
+      
+      Add these to your .env.local file. See RAZORPAY_SETUP.md for instructions.`
+    );
+  }
+
+  return { keyId, keySecret };
+};
+
 // Initialize Razorpay instance
+const { keyId, keySecret } = validateRazorpayConfig();
 export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: keyId,
+  key_secret: keySecret,
 });
 
 // Razorpay configuration
 export const razorpayConfig = {
-  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_id: keyId,
   currency: "INR",
   name: "Thumbnail Creator",
   description: "Professional Thumbnail Creation Service",
@@ -64,7 +83,7 @@ export function verifyPaymentSignature(
   razorpay_signature: string
 ): boolean {
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+    .createHmac("sha256", keySecret)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
     .digest("hex");
 
