@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, CreditCard } from "lucide-react";
+import { LogOut, User, CreditCard, Sparkles, Crown } from "lucide-react";
 
 export default function UserMenu() {
   const { data: session } = useSession();
@@ -50,9 +50,13 @@ export default function UserMenu() {
               {user?.isPro && (
                 <Badge
                   variant="default"
-                  className="bg-gradient-to-r from-purple-500 to-pink-500"
+                  className="bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-[length:200%_100%] animate-gradient-x text-white font-semibold shadow-lg border-0"
                 >
-                  Pro
+                  <Crown className="h-3 w-3 mr-1.5" />
+                  <span className="bg-gradient-to-r from-yellow-200 to-yellow-300 bg-clip-text text-transparent font-bold">
+                    PRO
+                  </span>
+                  <Sparkles className="h-3 w-3 ml-1.5 animate-pulse" />
                 </Badge>
               )}
             </div>
