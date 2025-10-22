@@ -52,7 +52,7 @@ const TopBar = () => {
         )} */}
 
         <div className="flex items-center space-x-4">
-          {session && isEditorPage && (
+          {/* {session && isEditorPage && (
             <Button
               onClick={handleSaveClick}
               variant="outline"
@@ -63,7 +63,7 @@ const TopBar = () => {
               <Save className="w-4 h-4 mr-2" />
               Save Project
             </Button>
-          )}
+          )} */}
           {status === "loading" ? (
             <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse" />
           ) : session ? (
