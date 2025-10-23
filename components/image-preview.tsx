@@ -82,8 +82,8 @@ function ImagePreview({
 
   // Function to handle mouse down for starting drag
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only allow dragging if there's an image and text to position
-    if (!removedBgImage || isCleared || !text) return;
+    // Only allow dragging if there's a result image and text to position
+    if (!resultImage || isCleared || !text) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -106,7 +106,7 @@ function ImagePreview({
 
   // Function to handle mouse move during drag
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !removedBgImage || isCleared || !text) return;
+    if (!isDragging || !resultImage || isCleared || !text) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -277,8 +277,10 @@ function ImagePreview({
       <div className="w-full text-center">
         <h2 className="text-2xl font-bold text-white mb-2">Preview</h2>
         <p className="text-gray-400 text-sm">
-          {removedBgImage && !isCleared
+          {resultImage && !isCleared
             ? "Drag the text to reposition it"
+            : removedBgImage && !isCleared
+            ? "Generate image to add text overlay"
             : "Upload an image to get started"}
         </p>
       </div>
@@ -290,7 +292,7 @@ function ImagePreview({
             ? "border-2 border-solid border-gray-600/30"
             : "border-2 border-dashed border-gray-600/30"
         } ${
-          removedBgImage && !isCleared && text
+          resultImage && !isCleared && text
             ? isDragging
               ? "cursor-grabbing border-blue-400/50"
               : "cursor-grab border-blue-400/30 hover:border-blue-400/50"
@@ -306,7 +308,7 @@ function ImagePreview({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         title={
-          removedBgImage && !isCleared && text
+          resultImage && !isCleared && text
             ? "Click and drag to position text"
             : ""
         }
@@ -330,7 +332,7 @@ function ImagePreview({
         )}
 
         {/* Outline text above removeBgImage */}
-        {removedBgImage && !isCleared && outlineEnabled && (
+        {resultImage && !isCleared && outlineEnabled && (
           <div
             className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
               isDragging ? "scale-105 drop-shadow-lg" : ""
@@ -356,6 +358,41 @@ function ImagePreview({
             </h1>
           </div>
         )}
+
+        {/* Text over removedBgImage (when no resultImage yet) - HIDDEN BEFORE GENERATION */}
+        {false &&
+          removedBgImage &&
+          !resultImage &&
+          !isCleared &&
+          !outlineEnabled && (
+            <div
+              className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
+                isDragging ? "scale-105 drop-shadow-lg" : ""
+              }`}
+              style={{
+                ...textPositionStyle,
+                zIndex: 10,
+              }}
+            >
+              <h1
+                className="font-bold whitespace-pre-line"
+                style={{
+                  fontSize: `${textSize}px`,
+                  color: textColor,
+                  lineHeight: lineHeight,
+                  textAlign: textAlign,
+                  textShadow:
+                    textShadow > 0
+                      ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
+                          textShadow * 0.5
+                        }px rgba(0,0,0,0.3)`
+                      : "none",
+                }}
+              >
+                {text}
+              </h1>
+            </div>
+          )}
 
         {resultImage && !isCleared && (
           <div

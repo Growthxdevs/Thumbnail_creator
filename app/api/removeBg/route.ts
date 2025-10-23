@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
     // Check if we have this image cached (simple in-memory cache)
     // In production, you'd want to use Redis or a database
-    if (global.imageCache && global.imageCache[cacheKey]) {
+    if (false && global.imageCache && global.imageCache[cacheKey]) {
       console.log("Found cached result, but checking if delay is needed...");
 
       // Even for cached results, we need to apply delay for non-pro users who have exhausted their quota
@@ -190,30 +190,67 @@ export async function POST(req: Request) {
     // Try multiple free APIs in order of preference
     let resultImage = null;
 
-    // Option 1: Free Hugging Face Inference API (No API key required for basic usage)
+    // Option 1: Your custom Hugging Face space using Gradio client
     if (!resultImage) {
       try {
-        console.log("Trying Hugging Face Inference API...");
-        const response = await axios.post(
-          "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
-          Buffer.from(base64Image, "base64"),
-          {
-            headers: {
-              Authorization: process.env.HUGGINGFACE_API_KEY
-                ? `Bearer ${process.env.HUGGINGFACE_API_KEY}`
-                : undefined,
-              "Content-Type": "image/png",
-            },
-            responseType: "arraybuffer",
-            timeout: 30000, // 30 second timeout
-          }
+        console.log(
+          "Trying your custom Hugging Face space with Gradio client..."
         );
-        const resultBase64 = Buffer.from(response.data).toString("base64");
-        resultImage = `data:image/png;base64,${resultBase64}`;
-        console.log("Used Hugging Face Inference API");
+
+        // Convert base64 to blob
+        const imageBuffer = Buffer.from(base64Image, "base64");
+        const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+
+        // Import and use Gradio client
+        const { Client } = await import("@gradio/client");
+
+        // Connect to your space
+        const client = await Client.connect("koushik779/bg-remover");
+
+        // Make prediction
+        const result = await client.predict("/predict", {
+          image: imageBlob,
+        });
+
+        console.log("Gradio client result:", result.data);
+
+        // Extract the result image
+        if (result.data && result.data[0]) {
+          const resultData = result.data[0];
+
+          // Handle Gradio FileData format
+          if (resultData.url) {
+            // Download the image from the URL
+            const imageResponse = await axios.get(resultData.url, {
+              responseType: "arraybuffer",
+              timeout: 30000,
+            });
+            const resultBase64 = Buffer.from(imageResponse.data).toString(
+              "base64"
+            );
+            resultImage = `data:image/png;base64,${resultBase64}`;
+            console.log(
+              "Used your custom Hugging Face space successfully with Gradio client"
+            );
+          } else if (
+            typeof resultData === "string" &&
+            resultData.startsWith("data:image")
+          ) {
+            // Handle base64 string format
+            let resultBase64 = resultData.split(",")[1]; // Remove data:image/png;base64, prefix
+            resultImage = `data:image/png;base64,${resultBase64}`;
+            console.log(
+              "Used your custom Hugging Face space successfully with Gradio client"
+            );
+          } else {
+            throw new Error("Invalid response format from Gradio client");
+          }
+        } else {
+          throw new Error("Invalid response format from Gradio client");
+        }
       } catch (error) {
         console.log(
-          "Hugging Face Inference API failed, trying next option:",
+          "Your custom Hugging Face space with Gradio client failed, trying next option:",
           error instanceof Error ? error.message : String(error)
         );
       }

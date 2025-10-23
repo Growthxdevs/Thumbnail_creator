@@ -258,10 +258,10 @@ function ImageControls({
             </label>
             <input
               type="range"
-              min="100"
+              min="8"
               max="500"
-              value={textSize}
-              onChange={(e) => setTextSize(Number(e.target.value))}
+              value={Math.max(8, textSize)}
+              onChange={(e) => setTextSize(Math.max(8, Number(e.target.value)))}
               className="w-full accent-blue-500"
             />
           </div>

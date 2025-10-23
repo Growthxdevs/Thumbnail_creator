@@ -77,6 +77,13 @@ export default function RemoveBackground() {
     setOutlineColor(textColor);
   }, [textColor]);
 
+  // Ensure text size is never below minimum
+  useEffect(() => {
+    if (textSize < 8) {
+      setTextSize(8);
+    }
+  }, [textSize, setTextSize]);
+
   // Fetch fast generation status on component mount
   useEffect(() => {
     const fetchFastGenStatus = async () => {
