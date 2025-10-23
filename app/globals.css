@@ -324,3 +324,116 @@ body {
 .animate-pulse-slow {
   animation: pulse-slow 2s ease-in-out infinite;
 }
+
+/* Pro Avatar Animations */
+@keyframes crown-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 5px #ffd700) drop-shadow(0 0 10px #ffd700)
+      drop-shadow(0 0 15px #ffd700);
+    transform: scale(1) rotate(30deg);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 16px #ffd700)
+      drop-shadow(0 0 24px #ffd700);
+    transform: scale(1.05) rotate(30deg);
+  }
+}
+
+@keyframes fire-flicker {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px #ff4500) drop-shadow(0 0 6px #ff4500)
+      drop-shadow(0 0 9px #ff4500);
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    filter: drop-shadow(0 0 4px #ff4500) drop-shadow(0 0 8px #ff4500)
+      drop-shadow(0 0 12px #ff4500);
+    transform: scale(1.02) rotate(1deg);
+  }
+  50% {
+    filter: drop-shadow(0 0 5px #ff4500) drop-shadow(0 0 10px #ff4500)
+      drop-shadow(0 0 15px #ff4500);
+    transform: scale(1.05) rotate(-1deg);
+  }
+  75% {
+    filter: drop-shadow(0 0 4px #ff4500) drop-shadow(0 0 8px #ff4500)
+      drop-shadow(0 0 12px #ff4500);
+    transform: scale(1.02) rotate(0.5deg);
+  }
+}
+
+@keyframes burning-avatar {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 5px #ff4500) drop-shadow(0 0 10px #ff4500)
+      drop-shadow(0 0 15px #ff4500) drop-shadow(0 0 20px #ff6500)
+      drop-shadow(0 0 25px #ff8500);
+    transform: scale(1);
+  }
+  25% {
+    filter: drop-shadow(0 0 8px #ff4500) drop-shadow(0 0 15px #ff4500)
+      drop-shadow(0 0 22px #ff4500) drop-shadow(0 0 28px #ff6500)
+      drop-shadow(0 0 35px #ff8500);
+    transform: scale(1.02);
+  }
+  50% {
+    filter: drop-shadow(0 0 10px #ff4500) drop-shadow(0 0 20px #ff4500)
+      drop-shadow(0 0 30px #ff4500) drop-shadow(0 0 40px #ff6500)
+      drop-shadow(0 0 50px #ff8500);
+    transform: scale(1.05);
+  }
+  75% {
+    filter: drop-shadow(0 0 8px #ff4500) drop-shadow(0 0 15px #ff4500)
+      drop-shadow(0 0 22px #ff4500) drop-shadow(0 0 28px #ff6500)
+      drop-shadow(0 0 35px #ff8500);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pro-avatar-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4), 0 0 0 0 rgba(255, 69, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 215, 0, 0.1),
+      0 0 0 16px rgba(255, 69, 0, 0.1);
+  }
+}
+
+@keyframes sparkle-rotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-crown-glow {
+  animation: crown-glow 2s ease-in-out infinite;
+}
+
+.animate-fire-flicker {
+  animation: fire-flicker 1.5s ease-in-out infinite;
+}
+
+.animate-pro-avatar-pulse {
+  animation: pro-avatar-pulse 2s ease-in-out infinite;
+}
+
+.animate-sparkle-rotate {
+  animation: sparkle-rotate 3s linear infinite;
+}
+
+.animate-burning-avatar {
+  animation: burning-avatar 1.5s ease-in-out infinite;
+}

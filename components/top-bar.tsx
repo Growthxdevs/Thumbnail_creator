@@ -1,26 +1,26 @@
 "use client";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+// import { usePathname } from "next/navigation";
 import UserMenu from "./user-menu";
 import LoginButton from "./login-button";
-import { useSaveProject } from "@/contexts/save-project-context";
-import { Save } from "lucide-react";
-import { Button } from "./ui/button";
+// import { useSaveProject } from "@/contexts/save-project-context";
+// import { Save } from "lucide-react";
+// import { Button } from "./ui/button";
 
 const TopBar = () => {
   const { data: session, status } = useSession();
-  const { saveDialogRef, canSave } = useSaveProject();
-  const pathname = usePathname();
+  // const { saveDialogRef } = useSaveProject();
+  // const pathname = usePathname();
 
   // Only show save button on editor page
-  const isEditorPage = pathname === "/editor";
+  // const isEditorPage = pathname === "/editor";
 
-  const handleSaveClick = () => {
-    if (saveDialogRef.current) {
-      saveDialogRef.current.openDialog();
-    }
-  };
+  // const handleSaveClick = () => {
+  //   if (saveDialogRef.current) {
+  //     saveDialogRef.current.openDialog();
+  //   }
+  // };
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-dark-bg-secondary/80 border-b border-dark-border">
