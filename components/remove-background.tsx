@@ -45,6 +45,17 @@ export default function RemoveBackground() {
   const [resetFileInput, setResetFileInput] = useState(0);
   const { setCanSave } = useSaveProject();
 
+  // Fast generation state
+  const [useFastGeneration, setUseFastGeneration] = useState(false);
+  const [fastGenStatus, setFastGenStatus] = useState<{
+    isPro: boolean;
+    canUse: boolean;
+    remainingFastGenerations: number;
+    weeklyLimit: number;
+    usedThisWeek: number;
+    weekStart: string;
+  } | null>(null);
+
   const textPositionStyle = {
     left: `${horizontalPosition}%`,
     top: `${verticalPosition}%`,
@@ -66,6 +77,25 @@ export default function RemoveBackground() {
   useEffect(() => {
     setOutlineColor(textColor);
   }, [textColor]);
+
+  // Fetch fast generation status on component mount
+  useEffect(() => {
+    const fetchFastGenStatus = async () => {
+      try {
+        const response = await fetch("/api/fast-generation-status");
+        if (response.ok) {
+          const status = await response.json();
+          setFastGenStatus(status);
+        }
+      } catch (error) {
+        console.error("Error fetching fast generation status:", error);
+      }
+    };
+
+    if (session?.user?.id) {
+      fetchFastGenStatus();
+    }
+  }, [session?.user?.id]);
 
   // Function to handle credit deduction
   const handleCreditDeduction = async () => {
@@ -148,6 +178,7 @@ export default function RemoveBackground() {
       try {
         const formData = new FormData();
         formData.append("image", originalFile);
+        formData.append("useFastGeneration", useFastGeneration.toString());
 
         const response = await fetch("/api/removeBg", {
           method: "POST",
@@ -158,9 +189,32 @@ export default function RemoveBackground() {
           const data = await response.json();
           setResultImage(data.image);
           setIsGenerated(true);
+
+          // Update fast generation status if provided
+          if (data.remainingFastGenerations !== undefined) {
+            setFastGenStatus((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    remainingFastGenerations: data.remainingFastGenerations,
+                    canUse: data.remainingFastGenerations > 0,
+                  }
+                : null
+            );
+          }
+
           const notification = document.createElement("div");
-          notification.textContent =
+          let notificationText =
             "Image generated successfully! You can now download for free.";
+
+          if (data.fastGenerationUsed && !data.isPro) {
+            notificationText += ` Fast generation used! ${data.remainingFastGenerations} remaining this week.`;
+          } else if (!data.fastGenerationUsed && !data.isPro) {
+            notificationText +=
+              " Using standard generation. Upgrade to Pro for faster processing!";
+          }
+
+          notification.textContent = notificationText;
           notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -173,9 +227,43 @@ export default function RemoveBackground() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
           `;
           document.body.appendChild(notification);
-          setTimeout(() => document.body.removeChild(notification), 3000);
+          setTimeout(() => document.body.removeChild(notification), 5000);
         } else {
-          throw new Error("Failed to process image");
+          const errorData = await response.json();
+          if (
+            response.status === 429 &&
+            errorData.message.includes("Fast generation limit")
+          ) {
+            const notification = document.createElement("div");
+            notification.textContent = `Fast generation limit reached! ${errorData.remainingFastGenerations} remaining this week. Upgrade to Pro for unlimited fast generation.`;
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #f59e0b;
+              color: white;
+              padding: 12px 16px;
+              border-radius: 8px;
+              z-index: 1000;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => document.body.removeChild(notification), 5000);
+
+            // Update fast generation status
+            setFastGenStatus((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    remainingFastGenerations:
+                      errorData.remainingFastGenerations,
+                    canUse: false,
+                  }
+                : null
+            );
+          } else {
+            throw new Error("Failed to process image");
+          }
         }
       } catch (error) {
         console.error("Error processing image:", error);
@@ -459,6 +547,9 @@ export default function RemoveBackground() {
             setTextShadow={setTextShadow}
             textAboveImage={textAboveImage}
             setTextAboveImage={setTextAboveImage}
+            useFastGeneration={useFastGeneration}
+            setUseFastGeneration={setUseFastGeneration}
+            fastGenStatus={fastGenStatus}
           />
         </div>
       </div>

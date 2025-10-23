@@ -49,6 +49,17 @@ interface ImageControlsProps {
   setTextShadow: (value: number) => void;
   textAboveImage: boolean;
   setTextAboveImage: (value: boolean) => void;
+  // Fast generation props
+  useFastGeneration: boolean;
+  setUseFastGeneration: (value: boolean) => void;
+  fastGenStatus: {
+    isPro: boolean;
+    canUse: boolean;
+    remainingFastGenerations: number;
+    weeklyLimit: number;
+    usedThisWeek: number;
+    weekStart: string;
+  } | null;
 }
 
 function ImageControls({
@@ -95,6 +106,9 @@ function ImageControls({
   setTextShadow,
   textAboveImage,
   setTextAboveImage,
+  useFastGeneration,
+  setUseFastGeneration,
+  fastGenStatus,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
@@ -115,6 +129,55 @@ function ImageControls({
         </div>
         <PlanModal />
       </div>
+
+      {/* Fast Generation Toggle */}
+      {fastGenStatus && (
+        <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-4 rounded-lg border border-blue-400/30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="fastGeneration"
+                checked={useFastGeneration}
+                onChange={(e) => setUseFastGeneration(e.target.checked)}
+                disabled={!fastGenStatus.canUse && !fastGenStatus.isPro}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <label
+                htmlFor="fastGeneration"
+                className="text-white font-medium"
+              >
+                ⚡ Fast Generation
+              </label>
+            </div>
+            {fastGenStatus.isPro ? (
+              <span className="text-green-400 text-sm font-semibold">PRO</span>
+            ) : (
+              <span className="text-yellow-400 text-sm">
+                {fastGenStatus.remainingFastGenerations}/
+                {fastGenStatus.weeklyLimit}
+              </span>
+            )}
+          </div>
+
+          {fastGenStatus.isPro ? (
+            <p className="text-blue-200 text-sm">
+              Pro users get unlimited fast generation!
+            </p>
+          ) : fastGenStatus.canUse ? (
+            <p className="text-blue-200 text-sm">
+              Use fast generation for quicker processing.{" "}
+              {fastGenStatus.remainingFastGenerations} remaining this week.
+            </p>
+          ) : (
+            <p className="text-orange-200 text-sm">
+              Fast generation limit reached for this week. Upgrade to Pro for
+              unlimited fast generation!
+            </p>
+          )}
+        </div>
+      )}
+
       {removeBgImage && (
         <div className="flex gap-2">
           <Button
