@@ -39,8 +39,12 @@ const TextBehindImage = () => {
       {/* Hero Section with Full-Width Image */}
       <div className="flex flex-col items-center justify-center">
         <h1 className="dark-glow-text text-4xl md:text-6xl font-dancing font-black text-center px-6 drop-shadow-2xl leading-tight tracking-wide">
-          Weave Stories Through Sight
+          Thumbnail Creator
         </h1>
+        <p className="text-lg md:text-xl text-gray-300 text-center px-6 mt-4 max-w-4xl">
+          Create stunning thumbnails with AI-powered tools and customizable text
+          overlays
+        </p>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
