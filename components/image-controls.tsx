@@ -49,9 +49,7 @@ interface ImageControlsProps {
   setTextShadow: (value: number) => void;
   textAboveImage: boolean;
   setTextAboveImage: (value: boolean) => void;
-  // Fast generation props
-  useFastGeneration: boolean;
-  setUseFastGeneration: (value: boolean) => void;
+  // Fast generation status (read-only, automatically determined by server)
   fastGenStatus: {
     isPro: boolean;
     canUse: boolean;
@@ -106,75 +104,55 @@ function ImageControls({
   setTextShadow,
   textAboveImage,
   setTextAboveImage,
-  useFastGeneration,
-  setUseFastGeneration,
   fastGenStatus,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
     : Object.keys(fonts).slice(0, 5);
   return (
-    <div className="w-full md:w-2/5 backdrop-blur-md bg-white/5 p-6 rounded-lg shadow-2xl space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <p className="text-white">
-            Available credits:{" "}
-            <span className="text-yellow-300 font-bold">{credits}</span>
-          </p>
-          {credits <= 0 && (
-            <p className="text-red-400 text-sm mt-1">
-              No credits available. Purchase more to download images.
+    <div className="w-full backdrop-blur-md bg-white/5 p-6 rounded-xl shadow-2xl space-y-6">
+      {/* Controls Header */}
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Controls</h2>
+        <p className="text-gray-400 text-sm">Customize your thumbnail</p>
+      </div>
+      {/* Credits Section */}
+      <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-4 rounded-lg border border-yellow-500/20">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <p className="text-white font-medium">
+              Available credits:{" "}
+              <span className="text-yellow-300 font-bold text-xl">
+                {credits}
+              </span>
             </p>
-          )}
+            {credits <= 0 && (
+              <p className="text-red-400 text-sm mt-1">
+                No credits available. Purchase more to download images.
+              </p>
+            )}
+          </div>
+          <PlanModal />
         </div>
-        <PlanModal />
       </div>
 
-      {/* Fast Generation Toggle */}
-      {fastGenStatus && (
+      {/* Fast Generation Status - Only show for non-Pro users */}
+      {fastGenStatus && !fastGenStatus.isPro && (
         <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-4 rounded-lg border border-blue-400/30">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="fastGeneration"
-                checked={useFastGeneration}
-                onChange={(e) => setUseFastGeneration(e.target.checked)}
-                disabled={!fastGenStatus.canUse && !fastGenStatus.isPro}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-              />
-              <label
-                htmlFor="fastGeneration"
-                className="text-white font-medium"
-              >
-                ⚡ Fast Generation
-              </label>
+              <span className="text-white font-medium">Fast Generation</span>
             </div>
-            {fastGenStatus.isPro ? (
-              <span className="text-green-400 text-sm font-semibold">PRO</span>
-            ) : (
-              <span className="text-yellow-400 text-sm">
-                {fastGenStatus.remainingFastGenerations}/
-                {fastGenStatus.weeklyLimit}
-              </span>
-            )}
+            <span className="text-yellow-400 text-sm">
+              ⚡{fastGenStatus.remainingFastGenerations}/
+              {fastGenStatus.weeklyLimit}
+            </span>
           </div>
 
-          {fastGenStatus.isPro ? (
-            <p className="text-blue-200 text-sm">
-              Pro users get unlimited fast generation!
-            </p>
-          ) : fastGenStatus.canUse ? (
-            <p className="text-blue-200 text-sm">
-              Use fast generation for quicker processing.{" "}
-              {fastGenStatus.remainingFastGenerations} remaining this week.
-            </p>
-          ) : (
-            <p className="text-orange-200 text-sm">
-              Fast generation limit reached for this week. Upgrade to Pro for
-              unlimited fast generation!
-            </p>
-          )}
+          <p className="text-blue-200 text-sm">
+            You have 3 fast generations per week.{" "}
+            {fastGenStatus.remainingFastGenerations} remaining this week.
+          </p>
         </div>
       )}
 
@@ -198,55 +176,96 @@ function ImageControls({
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+      {/* Text Content Section */}
+      <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700/50">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h7"
+            />
+          </svg>
           Text Content
-        </label>
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="w-full p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Enter your text content here..."
-          rows={3}
-        />
+        </h3>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Enter your text
+          </label>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="w-full p-3 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="Enter your text content here..."
+            rows={3}
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Font
-        </label>
-        <select
-          value={fontFamily || ""}
-          onChange={(e) => setFontFamily(e.target.value)}
-          className="w-full p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="" disabled>
-            Select a font
-          </option>
-          {limitedFonts.map((font) => (
-            <option
-              key={font}
-              value={font}
-              className={`${fonts[font as keyof typeof fonts]} bg-gray-900`}
+      {/* Typography Section */}
+      <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700/50">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-purple-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+          Typography
+        </h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Font Family
+            </label>
+            <select
+              value={fontFamily || ""}
+              onChange={(e) => setFontFamily(e.target.value)}
+              className="w-full p-3 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
-              {font}
-            </option>
-          ))}
-        </select>
-      </div>
+              <option value="" disabled>
+                Select a font
+              </option>
+              {limitedFonts.map((font) => (
+                <option
+                  key={font}
+                  value={font}
+                  className={`${fonts[font as keyof typeof fonts]} bg-gray-900`}
+                >
+                  {font}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Text Size: {textSize}px
-        </label>
-        <input
-          type="range"
-          min="100"
-          max="500"
-          value={textSize}
-          onChange={(e) => setTextSize(Number(e.target.value))}
-          className="w-full accent-dark-accent-primary"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Text Size: {textSize}px
+            </label>
+            <input
+              type="range"
+              min="100"
+              max="500"
+              value={textSize}
+              onChange={(e) => setTextSize(Number(e.target.value))}
+              className="w-full accent-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
       <div>

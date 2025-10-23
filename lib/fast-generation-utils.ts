@@ -34,6 +34,13 @@ export async function canUseFastGeneration(
 
   const weekStart = getWeekStart();
 
+  console.log("Fast generation check:", {
+    userId,
+    isPro,
+    weekStart: weekStart.toISOString(),
+    weeklyLimit,
+  });
+
   // Get or create usage record for this week
   let usage = await db.fastGenerationUsage.findUnique({
     where: {
@@ -44,6 +51,8 @@ export async function canUseFastGeneration(
     },
   });
 
+  console.log("Current usage record:", usage);
+
   if (!usage) {
     usage = await db.fastGenerationUsage.create({
       data: {
@@ -52,16 +61,21 @@ export async function canUseFastGeneration(
         count: 0,
       },
     });
+    console.log("Created new usage record:", usage);
   }
 
   const remaining = Math.max(0, weeklyLimit - usage.count);
 
-  return {
+  const result = {
     canUse: usage.count < weeklyLimit,
     remainingFastGenerations: remaining,
     weeklyLimit,
     isPro: false,
   };
+
+  console.log("Fast generation result:", result);
+
+  return result;
 }
 
 // Record a fast generation usage
@@ -125,4 +139,3 @@ export async function getFastGenerationStatus(userId: string, isPro: boolean) {
     weekStart,
   };
 }
-

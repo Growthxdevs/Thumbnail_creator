@@ -45,8 +45,7 @@ export default function RemoveBackground() {
   const [resetFileInput, setResetFileInput] = useState(0);
   const { setCanSave } = useSaveProject();
 
-  // Fast generation state
-  const [useFastGeneration, setUseFastGeneration] = useState(false);
+  // Fast generation is now automatically determined by server
   const [fastGenStatus, setFastGenStatus] = useState<{
     isPro: boolean;
     canUse: boolean;
@@ -86,6 +85,7 @@ export default function RemoveBackground() {
         if (response.ok) {
           const status = await response.json();
           setFastGenStatus(status);
+          // Fast generation is now automatically determined by server
         }
       } catch (error) {
         console.error("Error fetching fast generation status:", error);
@@ -172,108 +172,60 @@ export default function RemoveBackground() {
       return;
     }
 
-    const creditDeducted = await handleCreditDeduction();
-    if (creditDeducted) {
-      setLoading(true);
-      try {
-        const formData = new FormData();
-        formData.append("image", originalFile);
-        formData.append("useFastGeneration", useFastGeneration.toString());
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", originalFile);
+      // Fast generation is automatically determined by server based on user status and availability
 
-        const response = await fetch("/api/removeBg", {
-          method: "POST",
-          body: formData,
-        });
+      const response = await fetch("/api/removeBg", {
+        method: "POST",
+        body: formData,
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setResultImage(data.image);
-          setIsGenerated(true);
+      if (response.ok) {
+        const data = await response.json();
+        setResultImage(data.image);
+        setIsGenerated(true);
 
-          // Update fast generation status if provided
-          if (data.remainingFastGenerations !== undefined) {
-            setFastGenStatus((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    remainingFastGenerations: data.remainingFastGenerations,
-                    canUse: data.remainingFastGenerations > 0,
-                  }
-                : null
-            );
-          }
-
-          const notification = document.createElement("div");
-          let notificationText =
-            "Image generated successfully! You can now download for free.";
-
-          if (data.fastGenerationUsed && !data.isPro) {
-            notificationText += ` Fast generation used! ${data.remainingFastGenerations} remaining this week.`;
-          } else if (!data.fastGenerationUsed && !data.isPro) {
-            notificationText +=
-              " Using standard generation. Upgrade to Pro for faster processing!";
-          }
-
-          notification.textContent = notificationText;
-          notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          `;
-          document.body.appendChild(notification);
-          setTimeout(() => document.body.removeChild(notification), 5000);
-        } else {
-          const errorData = await response.json();
-          if (
-            response.status === 429 &&
-            errorData.message.includes("Fast generation limit")
-          ) {
-            const notification = document.createElement("div");
-            notification.textContent = `Fast generation limit reached! ${errorData.remainingFastGenerations} remaining this week. Upgrade to Pro for unlimited fast generation.`;
-            notification.style.cssText = `
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              background: #f59e0b;
-              color: white;
-              padding: 12px 16px;
-              border-radius: 8px;
-              z-index: 1000;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => document.body.removeChild(notification), 5000);
-
-            // Update fast generation status
-            setFastGenStatus((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    remainingFastGenerations:
-                      errorData.remainingFastGenerations,
-                    canUse: false,
-                  }
-                : null
-            );
-          } else {
-            throw new Error("Failed to process image");
-          }
+        // Update credits from server response (credits are deducted on server side)
+        if (data.credits !== undefined) {
+          // Update the credit store with the new credit count from server
+          const { useCreditStore } = await import("@/stores/credit-store");
+          const { setCredits } = useCreditStore.getState();
+          setCredits(data.credits);
         }
-      } catch (error) {
-        console.error("Error processing image:", error);
+
+        // Update fast generation status if provided
+        if (data.remainingFastGenerations !== undefined) {
+          setFastGenStatus((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  remainingFastGenerations: data.remainingFastGenerations,
+                  canUse: data.remainingFastGenerations > 0,
+                }
+              : null
+          );
+        }
+
         const notification = document.createElement("div");
-        notification.textContent = "Failed to process image. Please try again.";
+        let notificationText =
+          "Image generated successfully! You can now download for free.";
+
+        if (data.fastGenerationUsed && !data.isPro) {
+          notificationText += ` Fast generation used! ${data.remainingFastGenerations} remaining this week.`;
+        } else if (!data.fastGenerationUsed && !data.isPro) {
+          notificationText +=
+            " Using standard generation. Upgrade to Pro for faster processing!";
+        }
+
+        notification.textContent = notificationText;
         notification.style.cssText = `
           position: fixed;
           top: 20px;
           right: 20px;
-          background: #ef4444;
+          background: #10b981;
           color: white;
           padding: 12px 16px;
           border-radius: 8px;
@@ -282,12 +234,46 @@ export default function RemoveBackground() {
         `;
         document.body.appendChild(notification);
         setTimeout(() => document.body.removeChild(notification), 5000);
-      } finally {
-        setLoading(false);
+      } else {
+        const errorData = await response.json();
+        if (
+          response.status === 429 &&
+          errorData.message.includes("Fast generation limit")
+        ) {
+          const notification = document.createElement("div");
+          notification.textContent = `Fast generation limit reached! ${errorData.remainingFastGenerations} remaining this week. Upgrade to Pro for unlimited fast generation.`;
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f59e0b;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => document.body.removeChild(notification), 5000);
+
+          // Update fast generation status
+          setFastGenStatus((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  remainingFastGenerations: errorData.remainingFastGenerations,
+                  canUse: false,
+                }
+              : null
+          );
+        } else {
+          throw new Error("Failed to process image");
+        }
       }
-    } else {
+    } catch (error) {
+      console.error("Error processing image:", error);
       const notification = document.createElement("div");
-      notification.textContent = "Failed to deduct credit. Please try again.";
+      notification.textContent = "Failed to process image. Please try again.";
       notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -301,6 +287,8 @@ export default function RemoveBackground() {
       `;
       document.body.appendChild(notification);
       setTimeout(() => document.body.removeChild(notification), 5000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -445,23 +433,8 @@ export default function RemoveBackground() {
   // };
 
   return (
-    <div className="w-full min-h-screen p-8">
-      <div className="relative max-w-6xl mx-auto">
-        {/* Credits Card - Fixed Position */}
-        {/* <div className="fixed top-20 right-8 p-6 border rounded-lg bg-white shadow-lg transition-all hover:shadow-xl">
-          <div className="flex items-center gap-3">
-            <Coins className="w-6 h-6 text-yellow-500" />
-            <div>
-              <h2 className="text-sm font-semibold text-gray-600">
-                Available Credits
-              </h2>
-              <p className="text-2xl font-bold text-gray-800">
-                {session?.user?.credits ?? 0}
-              </p>
-            </div>
-          </div>
-        </div> */}
-
+    <div className="w-full min-h-screen p-4 md:p-8">
+      <div className="relative max-w-7xl mx-auto">
         {/* Save Project Dialog (hidden, only accessible via nav button) */}
         <SaveProjectDialog
           onSave={handleSaveProject}
@@ -470,87 +443,112 @@ export default function RemoveBackground() {
         />
 
         {/* Main Content */}
-        <div className="max-w-6xl w-full flex gap-6 sm:flex-wrap md:flex-nowrap">
-          {/* Left Side - Image Preview */}
-          <ImagePreview
-            loading={loading}
-            textPositionStyle={textPositionStyle}
-            resultImage={resultImage}
-            text={text}
-            textSize={textSize}
-            textColor={textColor}
-            removedBgImage={removedBgImage}
-            setRemovedBgImage={setRemovedBgImage}
-            isCleared={isCleared}
-            setIsCleared={setIsCleared}
-            credits={credits}
-            onCreditDeduction={handleCreditDeduction}
-            isGenerated={isGenerated}
-            onGenerate={handleGenerate}
-            setOriginalFile={setOriginalFile}
-            resetFileInput={resetFileInput}
-            outlineWidth={outlineWidth}
-            outlineEnabled={outlineEnabled}
-            outlineColor={outlineColor}
-            outlineTransparency={outlineTransparency}
-            setHorizontalPosition={setHorizontalPosition}
-            setVerticalPosition={setVerticalPosition}
-            horizontalPosition={horizontalPosition}
-            verticalPosition={verticalPosition}
-            lineHeight={lineHeight}
-            textAlign={textAlign}
-            textShadow={textShadow}
-            textAboveImage={textAboveImage}
-          />
+        <div className="w-full">
+          {/* Header Section */}
+          {/* <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold dark-glow-text mb-4">
+              Thumbnail Creator
+            </h1>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Create stunning thumbnails with AI-powered background removal and customizable text overlays
+            </p>
+          </div> */}
 
-          {/* Right Side - Controls */}
-          <ImageControls
-            setLoading={setLoading}
-            credits={credits}
-            text={text}
-            setResultImage={setResultImage}
-            setText={setText}
-            textSize={textSize}
-            setTextSize={setTextSize}
-            textColor={textColor}
-            setTextColor={setTextColor}
-            textOpacity={textOpacity}
-            setTextOpacity={setTextOpacity}
-            horizontalPosition={horizontalPosition}
-            setHorizontalPosition={setHorizontalPosition}
-            verticalPosition={verticalPosition}
-            setVerticalPosition={setVerticalPosition}
-            fontFamily={fontFamily}
-            setFontFamily={setFontFamily}
-            rotation={rotation}
-            removeBgImage={removedBgImage}
-            setRemovedBgImage={setRemovedBgImage}
-            setRotation={setRotation}
-            setIsCleared={setIsCleared}
-            setIsGenerated={setIsGenerated}
-            setOriginalFile={setOriginalFile}
-            setResetFileInput={setResetFileInput}
-            isPro={isPro}
-            outlineWidth={outlineWidth}
-            setOutlineWidth={setOutlineWidth}
-            outlineEnabled={outlineEnabled}
-            setOutlineEnabled={setOutlineEnabled}
-            outlineColor={outlineColor}
-            setOutlineColor={setOutlineColor}
-            outlineTransparency={outlineTransparency}
-            setOutlineTransparency={setOutlineTransparency}
-            lineHeight={lineHeight}
-            setLineHeight={setLineHeight}
-            textAlign={textAlign}
-            setTextAlign={setTextAlign}
-            textShadow={textShadow}
-            setTextShadow={setTextShadow}
-            textAboveImage={textAboveImage}
-            setTextAboveImage={setTextAboveImage}
-            useFastGeneration={useFastGeneration}
-            setUseFastGeneration={setUseFastGeneration}
-            fastGenStatus={fastGenStatus}
-          />
+          {/* Main Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* Image Preview Section */}
+            <div
+              className={`lg:col-span-7 ${
+                !resultImage ? "lg:col-start-3" : ""
+              }`}
+            >
+              <div className="sticky top-6">
+                <ImagePreview
+                  loading={loading}
+                  textPositionStyle={textPositionStyle}
+                  resultImage={resultImage}
+                  text={text}
+                  textSize={textSize}
+                  textColor={textColor}
+                  removedBgImage={removedBgImage}
+                  setRemovedBgImage={setRemovedBgImage}
+                  isCleared={isCleared}
+                  setIsCleared={setIsCleared}
+                  credits={credits}
+                  onCreditDeduction={handleCreditDeduction}
+                  isGenerated={isGenerated}
+                  onGenerate={handleGenerate}
+                  setOriginalFile={setOriginalFile}
+                  resetFileInput={resetFileInput}
+                  outlineWidth={outlineWidth}
+                  outlineEnabled={outlineEnabled}
+                  outlineColor={outlineColor}
+                  outlineTransparency={outlineTransparency}
+                  setHorizontalPosition={setHorizontalPosition}
+                  setVerticalPosition={setVerticalPosition}
+                  horizontalPosition={horizontalPosition}
+                  verticalPosition={verticalPosition}
+                  lineHeight={lineHeight}
+                  textAlign={textAlign}
+                  textShadow={textShadow}
+                  textAboveImage={textAboveImage}
+                />
+              </div>
+            </div>
+
+            {/* Controls Section - Only show when image has been created */}
+            {resultImage && (
+              <div className="lg:col-span-5">
+                <div className="sticky top-6">
+                  <ImageControls
+                    setLoading={setLoading}
+                    credits={credits}
+                    text={text}
+                    setResultImage={setResultImage}
+                    setText={setText}
+                    textSize={textSize}
+                    setTextSize={setTextSize}
+                    textColor={textColor}
+                    setTextColor={setTextColor}
+                    textOpacity={textOpacity}
+                    setTextOpacity={setTextOpacity}
+                    horizontalPosition={horizontalPosition}
+                    setHorizontalPosition={setHorizontalPosition}
+                    verticalPosition={verticalPosition}
+                    setVerticalPosition={setVerticalPosition}
+                    fontFamily={fontFamily}
+                    setFontFamily={setFontFamily}
+                    rotation={rotation}
+                    removeBgImage={removedBgImage}
+                    setRemovedBgImage={setRemovedBgImage}
+                    setRotation={setRotation}
+                    setIsCleared={setIsCleared}
+                    setIsGenerated={setIsGenerated}
+                    setOriginalFile={setOriginalFile}
+                    setResetFileInput={setResetFileInput}
+                    isPro={isPro}
+                    outlineWidth={outlineWidth}
+                    setOutlineWidth={setOutlineWidth}
+                    outlineEnabled={outlineEnabled}
+                    setOutlineEnabled={setOutlineEnabled}
+                    outlineColor={outlineColor}
+                    setOutlineColor={setOutlineColor}
+                    outlineTransparency={outlineTransparency}
+                    setOutlineTransparency={setOutlineTransparency}
+                    lineHeight={lineHeight}
+                    setLineHeight={setLineHeight}
+                    textAlign={textAlign}
+                    setTextAlign={setTextAlign}
+                    textShadow={textShadow}
+                    setTextShadow={setTextShadow}
+                    textAboveImage={textAboveImage}
+                    setTextAboveImage={setTextAboveImage}
+                    fastGenStatus={fastGenStatus}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

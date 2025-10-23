@@ -142,6 +142,14 @@ function ImagePreview({
   React.useEffect(() => {
     resetInput();
   }, [resetFileInput]);
+
+  // Reset image dimensions when image is cleared
+  React.useEffect(() => {
+    if (isCleared || !removedBgImage) {
+      setImageWidth(0);
+      setImageHeight(0);
+    }
+  }, [isCleared, removedBgImage]);
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -204,6 +212,8 @@ function ImagePreview({
             transformOrigin: "top left",
             width: `${compositionRef.current.clientWidth * scale}px`,
             height: `${compositionRef.current.clientHeight * scale}px`,
+            borderRadius: "0px",
+            border: "none",
           },
         });
 
@@ -262,19 +272,34 @@ function ImagePreview({
     setImageHeight(newHeight);
   };
   return (
-    <div className="w-full md:w-3/5 backdrop-blur-md dark-card-bg rounded-lg shadow-2xl p-4 flex flex-col gap-4 items-center">
+    <div className="w-full backdrop-blur-md dark-card-bg rounded-xl shadow-2xl p-6 flex flex-col gap-6 items-center">
+      {/* Preview Header */}
+      <div className="w-full text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Preview</h2>
+        <p className="text-gray-400 text-sm">
+          {removedBgImage && !isCleared
+            ? "Drag the text to reposition it"
+            : "Upload an image to get started"}
+        </p>
+      </div>
+
       <div
         ref={compositionRef}
-        className={`relative flex min-h-[400px] items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden w-full select-none ${
+        className={`relative flex items-center justify-center bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden w-full select-none transition-all duration-300 ${
+          removedBgImage && !isCleared
+            ? "border-2 border-solid border-gray-600/30"
+            : "border-2 border-dashed border-gray-600/30"
+        } ${
           removedBgImage && !isCleared && text
             ? isDragging
-              ? "cursor-grabbing"
-              : "cursor-grab"
-            : "cursor-default"
+              ? "cursor-grabbing border-blue-400/50"
+              : "cursor-grab border-blue-400/30 hover:border-blue-400/50"
+            : "cursor-default hover:border-gray-500/50"
         }`}
         style={{
           width: imageWidth ? `${imageWidth}px` : "100%",
-          height: imageHeight ? `${imageHeight}px` : "400px",
+          height: imageHeight ? `${imageHeight}px` : "auto",
+          minHeight: "400px",
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -372,11 +397,29 @@ function ImagePreview({
           />
         )}
 
-        {!removedBgImage && (
-          <div className="absolute inset-0 flex items-center justify-center border-2 border-dashed border-gray-500/30">
-            <div className="text-center p-6">
-              <p className="text-gray-300">
-                Upload your transparent background image (PNG)
+        {(!removedBgImage || isCleared) && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Upload Your Image
+              </h3>
+              <p className="text-gray-400 mb-6">
+                Choose an image to remove the background and add text overlay
               </p>
               <input
                 ref={fileInputRef}
@@ -395,24 +438,59 @@ function ImagePreview({
                   // Reset the input value to allow re-uploading the same file
                   e.target.value = "";
                 }}
-                className="mt-4 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                className="hidden"
+                id="image-upload"
               />
+              <label
+                htmlFor="image-upload"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg cursor-pointer transition-colors duration-200 shadow-lg hover:shadow-xl"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Choose Image
+              </label>
             </div>
           </div>
         )}
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
+      <div className="w-full flex flex-col items-center gap-4">
         {!isGenerated ? (
           // Generate Button
           <Button
             type="button"
             onClick={onGenerate}
-            disabled={credits <= 0}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={credits <= 0 || !removedBgImage}
+            className="w-full max-w-xs flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:scale-105"
           >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
             {credits <= 0
               ? "No Credits Available"
+              : !removedBgImage
+              ? "Upload Image First"
               : "Generate Image (1 Credit)"}
           </Button>
         ) : (
@@ -421,18 +499,20 @@ function ImagePreview({
             type="button"
             onClick={(e) => handleDownload(e)}
             disabled={!resultImage}
-            variant="outline"
-            className="flex items-center gap-2 bg-white/10 text-white border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full max-w-xs flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-5 h-5" />
             Download Image
           </Button>
         )}
+
         {!isGenerated && credits <= 0 && removedBgImage && (
-          <p className="text-red-400 text-sm text-center">
-            You need at least 1 credit to generate. Click &quot;Purchase
-            Credits&quot; to buy more.
-          </p>
+          <div className="w-full max-w-xs p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm text-center">
+              You need at least 1 credit to generate. Click &quot;Upgrade your
+              plan&quot; to buy more.
+            </p>
+          </div>
         )}
       </div>
     </div>
