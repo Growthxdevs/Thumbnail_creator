@@ -18,6 +18,9 @@
     },
     "app/editor/page.tsx": {
       "maxDuration": 30
+    },
+    "app/api/removeBg/route.ts": {
+      "maxDuration": 60
     }
   }
 }

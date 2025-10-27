@@ -14,37 +14,39 @@ declare global {
 }
 
 export async function POST(req: Request) {
-  // Require authentication
-  const session = await getServerAuthSession();
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  const formData = await req.formData();
-  const imageFile = formData.get("image") as File;
-  // Fast generation is automatically determined based on user status and availability
-
-  if (!imageFile) {
-    return NextResponse.json({ message: "Image is required" }, { status: 400 });
-  }
-
-  // Check if user can use fast generation
-  const fastGenStatus = await canUseFastGeneration(
-    session.user.id,
-    session.user.isPro || false
-  );
-
-  console.log("Fast generation status:", {
-    userId: session.user.id,
-    isPro: session.user.isPro || false,
-    canUse: fastGenStatus.canUse,
-    remaining: fastGenStatus.remainingFastGenerations,
-    weeklyLimit: fastGenStatus.weeklyLimit,
-  });
-
-  // Fast generation is automatically determined based on user status and availability
-
   try {
+    // Require authentication
+    const session = await getServerAuthSession();
+    if (!session) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const formData = await req.formData();
+    const imageFile = formData.get("image") as File;
+    // Fast generation is automatically determined based on user status and availability
+
+    if (!imageFile) {
+      return NextResponse.json(
+        { message: "Image is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user can use fast generation
+    const fastGenStatus = await canUseFastGeneration(
+      session.user.id,
+      session.user.isPro || false
+    );
+
+    console.log("Fast generation status:", {
+      userId: session.user.id,
+      isPro: session.user.isPro || false,
+      canUse: fastGenStatus.canUse,
+      remaining: fastGenStatus.remainingFastGenerations,
+      weeklyLimit: fastGenStatus.weeklyLimit,
+    });
+
+    // Fast generation is automatically determined based on user status and availability
     // Use original image for better quality
     const arrayBuffer = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(arrayBuffer).toString("base64");
@@ -63,7 +65,7 @@ export async function POST(req: Request) {
 
     // Check if we have this image cached (simple in-memory cache)
     // In production, you'd want to use Redis or a database
-    if (false && global.imageCache && global.imageCache[cacheKey]) {
+    if (false && global.imageCache?.[cacheKey]) {
       console.log("Found cached result, but checking if delay is needed...");
 
       // Even for cached results, we need to apply delay for non-pro users who have exhausted their quota
@@ -77,38 +79,38 @@ export async function POST(req: Request) {
 
       // Record fast generation usage if applicable (only for non-pro users)
       // This happens for both cached and non-cached results
-      if (shouldUseFastGeneration && !fastGenStatus.isPro) {
+      const userId = session?.user?.id || "";
+      if (shouldUseFastGeneration && !fastGenStatus.isPro && userId) {
         console.log("Recording fast generation usage for cached result...");
-        await recordFastGenerationUsage(session.user.id);
+        await recordFastGenerationUsage(userId);
       }
 
       // Get updated fast generation status for non-pro users
       let updatedFastGenStatus = fastGenStatus;
-      if (!fastGenStatus.isPro) {
+      if (!fastGenStatus.isPro && userId) {
         // Re-fetch the fast generation status after recording usage
         const { canUseFastGeneration } = await import(
           "@/lib/fast-generation-utils"
         );
-        updatedFastGenStatus = await canUseFastGeneration(
-          session.user.id,
-          false
-        );
+        updatedFastGenStatus = await canUseFastGeneration(userId, false);
       }
 
       // Get current user credits for the response
       const { db } = await import("@/lib/prisma");
       const { safeDbOperation } = await import("@/lib/db-utils");
-      const currentUser = await safeDbOperation(async () => {
-        return await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { credits: true },
-        });
-      });
+      const currentUser = userId
+        ? await safeDbOperation(async () => {
+            return await db.user.findUnique({
+              where: { id: userId },
+              select: { credits: true },
+            });
+          })
+        : null;
 
       console.log("Returning cached result");
       return NextResponse.json(
         {
-          image: global.imageCache[cacheKey],
+          image: global.imageCache?.[cacheKey],
           fastGenerationUsed: shouldUseFastGeneration,
           remainingFastGenerations:
             updatedFastGenStatus.remainingFastGenerations,
@@ -215,7 +217,7 @@ export async function POST(req: Request) {
         console.log("Gradio client result:", result.data);
 
         // Extract the result image
-        if (result.data && result.data[0]) {
+        if (result.data && Array.isArray(result.data) && result.data[0]) {
           const resultData = result.data[0];
 
           // Handle Gradio FileData format
@@ -237,7 +239,7 @@ export async function POST(req: Request) {
             resultData.startsWith("data:image")
           ) {
             // Handle base64 string format
-            let resultBase64 = resultData.split(",")[1]; // Remove data:image/png;base64, prefix
+            const resultBase64 = resultData.split(",")[1]; // Remove data:image/png;base64, prefix
             resultImage = `data:image/png;base64,${resultBase64}`;
             console.log(
               "Used your custom Hugging Face space successfully with Gradio client"
@@ -427,10 +429,30 @@ export async function POST(req: Request) {
     );
   } catch (error: unknown) {
     console.error("Error removing background:", error);
+
+    // Provide more detailed error information for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // Check for common deployment issues
+    let debugInfo = "";
+    if (errorMessage.includes("@gradio/client")) {
+      debugInfo = "Gradio client import failed - check if package is installed";
+    } else if (errorMessage.includes("timeout")) {
+      debugInfo = "Request timeout - API may be taking too long";
+    } else if (
+      errorMessage.includes("ENOTFOUND") ||
+      errorMessage.includes("ECONNREFUSED")
+    ) {
+      debugInfo = "Network connection failed - check API endpoints";
+    }
+
     return NextResponse.json(
       {
         message: "Background removal failed",
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
+        debug: debugInfo,
+        stack: process.env.NODE_ENV === "development" ? errorStack : undefined,
       },
       { status: 500 }
     );
