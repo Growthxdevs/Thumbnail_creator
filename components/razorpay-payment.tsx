@@ -66,7 +66,7 @@ export default function RazorpayPayment({
         key: key,
         amount: amount,
         currency: currency,
-        name: "Thumbnail Creator",
+        name: "Text with Image",
         description: "Professional Plan Subscription",
         order_id: orderId,
         // Add test mode configuration

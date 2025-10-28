@@ -30,8 +30,8 @@ export const razorpay = new Razorpay({
 export const razorpayConfig = {
   key_id: keyId,
   currency: "INR",
-  name: "Thumbnail Creator",
-  description: "Professional Thumbnail Creation Service",
+  name: "Text with Image",
+  description: "Professional Text with Image Service",
   image: "/favicon.ico", // You can update this to your logo
   theme: {
     color: "#2563eb", // Blue theme to match your app

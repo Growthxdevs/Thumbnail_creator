@@ -1,12 +1,12 @@
-# Thumbnail Creator
+# Text with Image
 
-A powerful Next.js application for creating custom thumbnails with text overlays and background removal. Users can save their projects and access them later.
+A powerful Next.js application for creating custom images with text overlays and background removal. Users can save their projects and access them later.
 
 ## Features
 
 - **Background Removal**: Upload images and automatically remove backgrounds
 - **Text Overlay**: Add customizable text with various fonts, colors, and positioning
-- **Project Management**: Save and load your thumbnail projects
+- **Project Management**: Save and load your text with image projects
 - **User Authentication**: Secure login with Google OAuth
 - **Credit System**: Manage usage with a credit-based system
 - **Real-time Preview**: See your changes instantly

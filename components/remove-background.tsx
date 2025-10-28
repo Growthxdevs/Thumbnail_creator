@@ -454,10 +454,10 @@ export default function RemoveBackground() {
           {/* Header Section */}
           {/* <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold dark-glow-text mb-4">
-              Thumbnail Creator
+              Text with Image
             </h1>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Create stunning thumbnails with AI-powered background removal and customizable text overlays
+              Create stunning images with AI-powered background removal and customizable text overlays
             </p>
           </div> */}
 

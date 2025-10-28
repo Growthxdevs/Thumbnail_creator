@@ -30,7 +30,7 @@ const TopBar = () => {
             href="/"
             className="text-2xl font-extrabold dark-glow-text font-dancing"
           >
-            Thumbnail Creator
+            Text with Image
           </Link>
         </div>
 

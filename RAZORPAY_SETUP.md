@@ -1,6 +1,6 @@
 # Razorpay Integration Setup
 
-This document explains how to set up Razorpay payment integration for your Thumbnail Creator app.
+This document explains how to set up Razorpay payment integration for your Text with Image app.
 
 ## Environment Variables
 

@@ -114,7 +114,7 @@ function ImageControls({
       {/* Controls Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-white mb-2">Controls</h2>
-        <p className="text-gray-400 text-sm">Customize your thumbnail</p>
+        <p className="text-gray-400 text-sm">Customize your image</p>
       </div>
       {/* Credits Section */}
       <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-4 rounded-lg border border-yellow-500/20">
