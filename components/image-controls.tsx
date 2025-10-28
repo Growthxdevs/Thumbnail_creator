@@ -169,6 +169,7 @@ function ImageControls({
               setIsGenerated(false); // Reset generated state
               setOriginalFile(null); // Reset original file
               setResetFileInput((prev: number) => prev + 1); // Trigger file input reset
+              setText("Text"); // Reset text to default
             }}
           >
             Clear
