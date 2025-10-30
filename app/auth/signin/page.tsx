@@ -26,11 +26,34 @@ export default function SignIn() {
     });
   }, [router]);
 
+  useEffect(() => {
+    // Auto-trigger Google sign-in when this page loads
+    let isMounted = true;
+    const start = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      try {
+        await signIn("google", {
+          callbackUrl: "/editor",
+          redirect: true,
+        });
+      } catch (error) {
+        console.error("Sign in error:", error);
+        setIsLoading(false);
+      }
+    };
+    start();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleGoogleSignIn = async () => {
+    // Keep button handler as a fallback if auto sign-in is blocked
     setIsLoading(true);
     try {
       await signIn("google", {
-        callbackUrl: "/",
+        callbackUrl: "/editor",
         redirect: true,
       });
     } catch (error) {
@@ -56,7 +79,7 @@ export default function SignIn() {
             size="lg"
           >
             <Chrome className="mr-2 h-5 w-5" />
-            {isLoading ? "Signing in..." : "Sign in with Google"}
+            {isLoading ? "Redirecting to Google…" : "Sign in with Google"}
           </Button>
 
           <div className="text-center">

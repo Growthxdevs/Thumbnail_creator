@@ -72,6 +72,7 @@ function ImagePreview({
 
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // Function to reset file input
   const resetInput = () => {
@@ -153,6 +154,9 @@ function ImagePreview({
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (downloading) return;
+    setDownloading(true);
 
     // Only check credits and deduct if image hasn't been generated yet
     if (!isGenerated) {
@@ -244,6 +248,8 @@ function ImagePreview({
       `;
       document.body.appendChild(notification);
       setTimeout(() => document.body.removeChild(notification), 5000);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -535,11 +541,20 @@ function ImagePreview({
           <Button
             type="button"
             onClick={(e) => handleDownload(e)}
-            disabled={!resultImage}
+            disabled={!resultImage || downloading}
             className="w-full max-w-xs flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
           >
-            <Download className="w-5 h-5" />
-            Download Image
+            {downloading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Preparing download…
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                Download Image
+              </>
+            )}
           </Button>
         )}
 

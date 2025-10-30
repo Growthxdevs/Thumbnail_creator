@@ -146,7 +146,7 @@ export default function UserMenu() {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuItem
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-red-600 focus:text-red-600"
               >
                 <LogOut className="mr-2 h-4 w-4" />

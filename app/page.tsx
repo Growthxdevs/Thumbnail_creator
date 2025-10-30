@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const TextBehindImage = () => {
   const router = useRouter();
@@ -15,6 +16,12 @@ const TextBehindImage = () => {
   };
 
   const galleryImages1 = [
+    { src: "edited-image (4)", alt: "Edited Image 4" },
+    { src: "edited-image (5)", alt: "Edited Image 5" },
+    { src: "edited-image (6)", alt: "Edited Image 6" },
+    { src: "edited-image (7)", alt: "Edited Image 7" },
+    { src: "edited-image (8)", alt: "Edited Image 8" },
+    { src: "edited-image (9)", alt: "Edited Image 9" },
     { src: "be back", alt: "Creative Composition" },
     { src: "bold", alt: "Bold Design" },
     { src: "bali", alt: "Scenic Landscape" },
@@ -30,8 +37,20 @@ const TextBehindImage = () => {
     { src: "vision", alt: "Visionary Concept" },
   ];
 
+  const allImages = [...galleryImages1, ...galleryImages2];
+  const [orientations, setOrientations] = useState<
+    Record<number, "portrait" | "landscape">
+  >({});
+
+  const [isOpening, setIsOpening] = useState(false);
+
   const handleOpenApp = () => {
+    if (isOpening) return;
+    setIsOpening(true);
+    // Navigate to editor; ServerAuthGuard will redirect to sign-in if needed
     router.push("/editor");
+    // Safety timeout to re-enable in case navigation is blocked
+    setTimeout(() => setIsOpening(false), 8000);
   };
 
   return (
@@ -53,9 +72,11 @@ const TextBehindImage = () => {
         >
           <Button
             onClick={handleOpenApp}
-            className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-blue-500 text-white !text-white px-10 py-4 rounded-lg transition transform hover:scale-105"
+            disabled={isOpening}
+            aria-busy={isOpening}
+            className="glow-on-hover relative flex items-center gap-2 w-60 h-14 bg-blue-500 text-white !text-white px-10 py-4 rounded-lg transition transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Open the App
+            {isOpening ? "Opening…" : "Open the App"}
             <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
           </Button>
         </motion.div>
@@ -66,70 +87,57 @@ const TextBehindImage = () => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
-        className="mt-16 max-w-7xl grid grid-cols-2 md:grid-cols-4 gap-6"
+        className="mt-16 max-w-7xl w-full"
       >
-        {galleryImages1.map((image, index) => (
-          <motion.div
-            key={image.src}
-            variants={{
-              hidden: { opacity: 0, scale: 0.9 },
-              visible: {
-                opacity: 1,
-                scale: 1,
-                transition: {
-                  duration: 0.5,
-                  delay: index * 0.2,
+        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-3 xl:columns-4 gap-6 [column-fill:_balance]">
+          {/* masonry columns */}
+          {allImages.map((image, index) => (
+            <motion.div
+              key={image.src + index}
+              variants={{
+                hidden: { opacity: 0, scale: 0.98 },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  transition: { duration: 0.4, delay: index * 0.08 },
                 },
-              },
-            }}
-            className="group relative overflow-hidden rounded-xl shadow-lg"
-          >
-            <motion.div whileHover="hover" variants={imageVariants}>
-              <Image
-                src={`/assets/${image.src}.png`}
-                alt={image.alt}
-                width={500}
-                height={500}
-                className="rounded-xl w-full h-full object-cover"
-              />
+              }}
+              className="mb-6 break-inside-avoid"
+            >
+              <motion.div
+                whileHover="hover"
+                variants={imageVariants}
+                className="group relative overflow-hidden rounded-xl shadow-lg"
+              >
+                <Image
+                  src={`/assets/${image.src}.png`}
+                  alt={image.alt}
+                  width={800}
+                  height={800}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  onLoadingComplete={(img) => {
+                    const orientation =
+                      img.naturalWidth >= img.naturalHeight
+                        ? "landscape"
+                        : "portrait";
+                    setOrientations((prev) => ({
+                      ...prev,
+                      [index]: orientation,
+                    }));
+                  }}
+                  className={
+                    "rounded-xl w-full " +
+                    (orientations[index] === "portrait"
+                      ? "object-cover h-[420px] md:h-[460px]"
+                      : orientations[index] === "landscape"
+                      ? "object-contain bg-black/30 h-[320px] md:h-[340px]"
+                      : "object-cover h-[320px]")
+                  }
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
-        ))}
-      </motion.section>
-
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        className="mt-8 max-w-7xl grid grid-cols-2 md:grid-cols-3 gap-6"
-      >
-        {galleryImages2.map((image, index) => (
-          <motion.div
-            key={image.src}
-            variants={{
-              hidden: { opacity: 0, scale: 0.9 },
-              visible: {
-                opacity: 1,
-                scale: 1,
-                transition: {
-                  duration: 0.5,
-                  delay: index * 0.2,
-                },
-              },
-            }}
-            className="group relative overflow-hidden rounded-xl shadow-lg"
-          >
-            <motion.div whileHover="hover" variants={imageVariants}>
-              <Image
-                src={`/assets/${image.src}.png`}
-                alt={image.alt}
-                width={500}
-                height={500}
-                className="rounded-xl w-full h-full object-cover"
-              />
-            </motion.div>
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </motion.section>
     </div>
   );
