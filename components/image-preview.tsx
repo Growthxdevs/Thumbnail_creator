@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import { Button } from "./ui/button";
 import domtoimage from "dom-to-image";
 
@@ -19,6 +20,7 @@ type ImagePreviewProps = {
   onCreditDeduction: () => Promise<boolean>;
   isGenerated: boolean;
   onGenerate: () => void;
+  onRemove?: () => void;
   setOriginalFile: (file: File | null) => void;
   resetFileInput: number;
   outlineWidth: number;
@@ -50,6 +52,7 @@ function ImagePreview({
   onCreditDeduction,
   isGenerated,
   onGenerate,
+  onRemove,
   setOriginalFile,
   resetFileInput,
   outlineWidth,
@@ -73,6 +76,25 @@ function ImagePreview({
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle mounting for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Prevent body scroll when downloading
+  useEffect(() => {
+    if (downloading) {
+      // Prevent scrolling
+      document.body.style.overflow = "hidden";
+
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [downloading]);
 
   // Function to reset file input
   const resetInput = () => {
@@ -206,16 +228,32 @@ function ImagePreview({
 
     try {
       if (compositionRef.current) {
-        const scale = 4;
+        const originalWidth = compositionRef.current.clientWidth;
+        const originalHeight = compositionRef.current.clientHeight;
+
+        // Maximum dimensions for the downloaded image (Full HD)
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+
+        // Calculate scale factors for width and height to fit within max dimensions
+        const scaleWidth = maxWidth / originalWidth;
+        const scaleHeight = maxHeight / originalHeight;
+
+        // Use the smaller scale to ensure image fits within both max dimensions
+        const scale = Math.min(scaleWidth, scaleHeight, 4); // Cap at 4x for smaller images
+
+        // Calculate final dimensions
+        const finalWidth = originalWidth * scale;
+        const finalHeight = originalHeight * scale;
 
         const blob = await domtoimage.toBlob(compositionRef.current, {
-          width: compositionRef.current.clientWidth * scale,
-          height: compositionRef.current.clientHeight * scale,
+          width: finalWidth,
+          height: finalHeight,
           style: {
             transform: `scale(${scale})`,
             transformOrigin: "top left",
-            width: `${compositionRef.current.clientWidth * scale}px`,
-            height: `${compositionRef.current.clientHeight * scale}px`,
+            width: `${finalWidth}px`,
+            height: `${finalHeight}px`,
             borderRadius: "0px",
             border: "none",
           },
@@ -277,107 +315,242 @@ function ImagePreview({
     setImageWidth(newWidth);
     setImageHeight(newHeight);
   };
-  return (
-    <div className="w-full backdrop-blur-md dark-card-bg rounded-xl shadow-2xl p-6 flex flex-col gap-6 items-center">
-      {/* Preview Header */}
-      <div className="w-full text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Preview</h2>
-        <p className="text-gray-400 text-sm">
-          {resultImage && !isCleared
-            ? "Drag the text to reposition it"
-            : removedBgImage && !isCleared
-            ? "Generate image to add text overlay"
-            : "Upload an image to get started"}
-        </p>
-      </div>
-
-      <div
-        ref={compositionRef}
-        className={`relative flex items-center justify-center bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden w-full select-none transition-all duration-300 ${
-          removedBgImage && !isCleared
-            ? "border-2 border-solid border-gray-600/30"
-            : "border-2 border-dashed border-gray-600/30"
-        } ${
-          resultImage && !isCleared && text
-            ? isDragging
-              ? "cursor-grabbing border-blue-400/50"
-              : "cursor-grab border-blue-400/30 hover:border-blue-400/50"
-            : "cursor-default hover:border-gray-500/50"
-        }`}
-        style={{
-          width: imageWidth ? `${imageWidth}px` : "100%",
-          height: imageHeight ? `${imageHeight}px` : "auto",
-          minHeight: "400px",
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        title={
-          resultImage && !isCleared && text
-            ? "Click and drag to position text"
-            : ""
+  // Download Modal with Custom Loader (rendered via portal)
+  const downloadModal =
+    downloading && mounted ? (
+      <>
+        <style>{`
+        .download-loader {
+          width: 175px;
+          height: 80px;
+          display: block;
+          margin: auto;
+          background-image: radial-gradient(circle 25px at 25px 25px, #FFF 100%, transparent 0), radial-gradient(circle 50px at 50px 50px, #FFF 100%, transparent 0), radial-gradient(circle 25px at 25px 25px, #FFF 100%, transparent 0), linear-gradient(#FFF 50px, transparent 0);
+          background-size: 50px 50px, 100px 76px, 50px 50px, 120px 40px;
+          background-position: 0px 30px, 37px 0px, 122px 30px, 25px 40px;
+          background-repeat: no-repeat;
+          position: relative;
+          box-sizing: border-box;
         }
-      >
-        {loading && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Loader2 className="w-10 h-10 text-white animate-spin" />
-          </div>
-        )}
-
-        {removedBgImage && !isCleared && (
-          <Image
-            src={removedBgImage}
-            alt="Subject"
-            fill
-            onLoad={handleImageLoad}
-            className="object-contain"
-            unoptimized
-            priority
-          />
-        )}
-
-        {/* Outline text above removeBgImage */}
-        {resultImage && !isCleared && outlineEnabled && (
+        .download-loader::after {
+          content: '';
+          left: 50%;
+          bottom: 0;
+          transform: translate(-50%, 0);
+          position: absolute;
+          border: 15px solid transparent;
+          border-top-color: #FF3D00;
+          box-sizing: border-box;
+          animation: fadePush 1s linear infinite;
+        }
+        .download-loader::before {
+          content: '';
+          left: 50%;
+          bottom: 30px;
+          transform: translate(-50%, 0);
+          position: absolute;
+          width: 15px;
+          height: 15px;
+          background: #FF3D00;
+          box-sizing: border-box;
+          animation: fadePush 1s linear infinite;
+        }
+        @keyframes fadePush {
+          0% {
+            transform: translate(-50%, -15px);
+            opacity: 0;
+          }
+          50% {
+            transform: translate(-50%, 0px);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, 15px);
+            opacity: 0;
+          }
+        }
+      `}</style>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center"
+          style={{
+            zIndex: 99999,
+            pointerEvents: "auto",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+        >
           <div
-            className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
-              isDragging ? "scale-105 drop-shadow-lg" : ""
-            }`}
-            style={{
-              ...textPositionStyle,
-              zIndex: 30,
-            }}
+            className="bg-gray-900 rounded-xl p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <h1
-              className="font-bold whitespace-pre-line"
-              style={{
-                fontSize: `${textSize}px`,
-                color: "rgba(0,0,0,0)",
-                WebkitTextStroke: `${outlineWidth}px ${outlineColor}`,
-                textShadow: "none",
-                opacity: outlineTransparency,
-                lineHeight: lineHeight,
-                textAlign: textAlign,
-              }}
-            >
-              {text}
-            </h1>
+            <span className="download-loader"></span>
+            <p className="text-white text-center mt-4 text-lg">
+              Preparing download...
+            </p>
           </div>
-        )}
+        </div>
+      </>
+    ) : null;
 
-        {/* Text over removedBgImage (when no resultImage yet) - HIDDEN BEFORE GENERATION */}
-        {false &&
-          removedBgImage &&
-          !resultImage &&
-          !isCleared &&
-          !outlineEnabled && (
+  return (
+    <>
+      {/* Download Modal rendered via portal to body */}
+      {mounted && downloadModal && createPortal(downloadModal, document.body)}
+      <div className="w-full backdrop-blur-md dark-card-bg rounded-xl shadow-2xl p-6 flex flex-col gap-6 items-center">
+        {/* Preview Header */}
+        <div className="w-full text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Preview</h2>
+          <p className="text-gray-400 text-sm">
+            {resultImage && !isCleared
+              ? "Drag the text to reposition it"
+              : removedBgImage && !isCleared
+              ? "Generate image to add text overlay"
+              : "Upload an image to get started"}
+          </p>
+        </div>
+
+        <div
+          ref={compositionRef}
+          className={`relative flex items-center justify-center bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden w-full select-none transition-all duration-300 ${
+            removedBgImage && !isCleared
+              ? "border-2 border-solid border-gray-600/30"
+              : "border-2 border-dashed border-gray-600/30"
+          } ${
+            resultImage && !isCleared && text
+              ? isDragging
+                ? "cursor-grabbing border-blue-400/50"
+                : "cursor-grab border-blue-400/30 hover:border-blue-400/50"
+              : "cursor-default hover:border-gray-500/50"
+          }`}
+          style={{
+            width: imageWidth ? `${imageWidth}px` : "100%",
+            height: imageHeight ? `${imageHeight}px` : "auto",
+            minHeight: "400px",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          title={
+            resultImage && !isCleared && text
+              ? "Click and drag to position text"
+              : ""
+          }
+        >
+          {/* X Button Overlay - Always Visible */}
+          {removedBgImage && !isCleared && onRemove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onRemove();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              className="absolute top-3 right-3 z-50 w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-all duration-200 opacity-100"
+              title="Remove Image"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+          {loading && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <Loader2 className="w-10 h-10 text-white animate-spin" />
+            </div>
+          )}
+
+          {removedBgImage && !isCleared && (
+            <Image
+              src={removedBgImage}
+              alt="Subject"
+              fill
+              onLoad={handleImageLoad}
+              className="object-contain"
+              unoptimized
+              priority
+            />
+          )}
+
+          {/* Outline text above removeBgImage */}
+          {resultImage && !isCleared && outlineEnabled && (
             <div
               className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
                 isDragging ? "scale-105 drop-shadow-lg" : ""
               }`}
               style={{
                 ...textPositionStyle,
-                zIndex: 10,
+                zIndex: 30,
+              }}
+            >
+              <h1
+                className="font-bold whitespace-pre-line"
+                style={{
+                  fontSize: `${textSize}px`,
+                  color: "rgba(0,0,0,0)",
+                  WebkitTextStroke: `${outlineWidth}px ${outlineColor}`,
+                  textShadow: "none",
+                  opacity: outlineTransparency,
+                  lineHeight: lineHeight,
+                  textAlign: textAlign,
+                }}
+              >
+                {text}
+              </h1>
+            </div>
+          )}
+
+          {/* Text over removedBgImage (when no resultImage yet) - HIDDEN BEFORE GENERATION */}
+          {false &&
+            removedBgImage &&
+            !resultImage &&
+            !isCleared &&
+            !outlineEnabled && (
+              <div
+                className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
+                  isDragging ? "scale-105 drop-shadow-lg" : ""
+                }`}
+                style={{
+                  ...textPositionStyle,
+                  zIndex: 10,
+                }}
+              >
+                <h1
+                  className="font-bold whitespace-pre-line"
+                  style={{
+                    fontSize: `${textSize}px`,
+                    color: textColor,
+                    lineHeight: lineHeight,
+                    textAlign: textAlign,
+                    textShadow:
+                      textShadow > 0
+                        ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
+                            textShadow * 0.5
+                          }px rgba(0,0,0,0.3)`
+                        : "none",
+                  }}
+                >
+                  {text}
+                </h1>
+              </div>
+            )}
+
+          {resultImage && !isCleared && (
+            <div
+              className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
+                isDragging ? "scale-105 drop-shadow-lg" : ""
+              }`}
+              style={{
+                ...textPositionStyle,
+                zIndex: textAboveImage ? 30 : 5,
               }}
             >
               <h1
@@ -400,93 +573,93 @@ function ImagePreview({
             </div>
           )}
 
-        {resultImage && !isCleared && (
-          <div
-            className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
-              isDragging ? "scale-105 drop-shadow-lg" : ""
-            }`}
-            style={{
-              ...textPositionStyle,
-              zIndex: textAboveImage ? 30 : 5,
-            }}
-          >
-            <h1
-              className="font-bold whitespace-pre-line"
-              style={{
-                fontSize: `${textSize}px`,
-                color: textColor,
-                lineHeight: lineHeight,
-                textAlign: textAlign,
-                textShadow:
-                  textShadow > 0
-                    ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
-                        textShadow * 0.5
-                      }px rgba(0,0,0,0.3)`
-                    : "none",
-              }}
-            >
-              {text}
-            </h1>
-          </div>
-        )}
+          {resultImage && !isCleared && (
+            <Image
+              src={resultImage}
+              alt="Processed Image"
+              fill
+              className="object-contain z-20"
+              unoptimized
+            />
+          )}
 
-        {resultImage && !isCleared && (
-          <Image
-            src={resultImage}
-            alt="Processed Image"
-            fill
-            className="object-contain z-20"
-            unoptimized
-          />
-        )}
-
-        {(!removedBgImage || isCleared) && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center p-8">
-              <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {(!removedBgImage || isCleared) && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Upload Your Image
+                </h3>
+                <p className="text-gray-400 mb-6">
+                  Choose an image to remove the background and add text overlay
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const imageUrl = URL.createObjectURL(file);
+                      setRemovedBgImage(imageUrl);
+                      // Store the file for later processing
+                      setOriginalFile(file);
+                      // Reset cleared state so the new image can be displayed
+                      setIsCleared(false);
+                    }
+                    // Reset the input value to allow re-uploading the same file
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg cursor-pointer transition-colors duration-200 shadow-lg hover:shadow-xl"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Choose Image
+                </label>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Upload Your Image
-              </h3>
-              <p className="text-gray-400 mb-6">
-                Choose an image to remove the background and add text overlay
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const imageUrl = URL.createObjectURL(file);
-                    setRemovedBgImage(imageUrl);
-                    // Store the file for later processing
-                    setOriginalFile(file);
-                    // Reset cleared state so the new image can be displayed
-                    setIsCleared(false);
-                  }
-                  // Reset the input value to allow re-uploading the same file
-                  e.target.value = "";
-                }}
-                className="hidden"
-                id="image-upload"
-              />
-              <label
-                htmlFor="image-upload"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg cursor-pointer transition-colors duration-200 shadow-lg hover:shadow-xl"
+            </div>
+          )}
+        </div>
+
+        <div className="w-full flex flex-col items-center gap-4">
+          <div className="w-full max-w-xs flex gap-3">
+            {!isGenerated ? (
+              // Generate Button
+              <Button
+                type="button"
+                onClick={onGenerate}
+                disabled={credits <= 0 || !removedBgImage}
+                className="flex-1 flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:scale-105"
               >
                 <svg
                   className="w-5 h-5"
@@ -498,76 +671,61 @@ function ImagePreview({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M12 4v16m8-8H4"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                Choose Image
-              </label>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="w-full flex flex-col items-center gap-4">
-        {!isGenerated ? (
-          // Generate Button
-          <Button
-            type="button"
-            onClick={onGenerate}
-            disabled={credits <= 0 || !removedBgImage}
-            className="w-full max-w-xs flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:scale-105"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            {credits <= 0
-              ? "No Credits Available"
-              : !removedBgImage
-              ? "Upload Image First"
-              : "Generate Image (1 Credit)"}
-          </Button>
-        ) : (
-          // Download Button
-          <Button
-            type="button"
-            onClick={(e) => handleDownload(e)}
-            disabled={!resultImage || downloading}
-            className="w-full max-w-xs flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-          >
-            {downloading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Preparing download…
-              </>
+                {credits <= 0
+                  ? "No Credits Available"
+                  : !removedBgImage
+                  ? "Upload Image First"
+                  : "Generate Image (1 Credit)"}
+              </Button>
             ) : (
-              <>
-                <Download className="w-5 h-5" />
-                Download Image
-              </>
+              // Download Button
+              <Button
+                type="button"
+                onClick={(e) => handleDownload(e)}
+                disabled={!resultImage || downloading}
+                className="flex-1 flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Preparing download…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    Download Image
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
-        )}
 
-        {!isGenerated && credits <= 0 && removedBgImage && (
-          <div className="w-full max-w-xs p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-red-400 text-sm text-center">
-              You need at least 1 credit to generate. Click &quot;Upgrade your
-              plan&quot; to buy more.
-            </p>
+            {/* Remove Button */}
+            {/* {removedBgImage && !isCleared && onRemove && (
+            <Button
+              type="button"
+              onClick={onRemove}
+              className="px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+              title="Remove Image"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )} */}
           </div>
-        )}
+
+          {!isGenerated && credits <= 0 && removedBgImage && (
+            <div className="w-full max-w-xs p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm text-center">
+                You need at least 1 credit to generate. Click &quot;Upgrade your
+                plan&quot; to buy more.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

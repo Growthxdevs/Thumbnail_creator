@@ -138,6 +138,16 @@ export default function RemoveBackground() {
     }
   };
 
+  // Function to handle remove/clear image
+  const handleRemove = () => {
+    setRemovedBgImage("");
+    setResultImage(null);
+    setIsCleared(true);
+    setIsGenerated(false);
+    setOriginalFile(null);
+    setResetFileInput((prev) => prev + 1);
+  };
+
   // Function to handle generate action
   const handleGenerate = async () => {
     if (credits <= 0) {
@@ -485,6 +495,7 @@ export default function RemoveBackground() {
                   onCreditDeduction={handleCreditDeduction}
                   isGenerated={isGenerated}
                   onGenerate={handleGenerate}
+                  onRemove={handleRemove}
                   setOriginalFile={setOriginalFile}
                   resetFileInput={resetFileInput}
                   outlineWidth={outlineWidth}
