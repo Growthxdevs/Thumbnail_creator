@@ -1,4 +1,5 @@
 import { db } from "@/lib/prisma";
+import { safeDbOperation } from "@/lib/db-utils";
 
 // Get the start of the current week (Monday)
 function getWeekStart(date: Date = new Date()): Date {
@@ -41,27 +42,42 @@ export async function canUseFastGeneration(
     weeklyLimit,
   });
 
-  // Get or create usage record for this week
-  let usage = await db.fastGenerationUsage.findUnique({
-    where: {
-      userId_weekStart: {
-        userId,
-        weekStart,
+  // Get or create usage record for this week - use safe wrapper to handle connection pooler issues
+  let usage = await safeDbOperation(async () => {
+    return await db.fastGenerationUsage.findUnique({
+      where: {
+        userId_weekStart: {
+          userId,
+          weekStart,
+        },
       },
-    },
+    });
   });
 
   console.log("Current usage record:", usage);
 
   if (!usage) {
-    usage = await db.fastGenerationUsage.create({
-      data: {
-        userId,
-        weekStart,
-        count: 0,
-      },
+    usage = await safeDbOperation(async () => {
+      return await db.fastGenerationUsage.create({
+        data: {
+          userId,
+          weekStart,
+          count: 0,
+        },
+      });
     });
     console.log("Created new usage record:", usage);
+  }
+
+  // If usage is still null after retries, use default values
+  if (!usage) {
+    console.warn("Failed to get or create usage record after retries, using defaults");
+    return {
+      canUse: false,
+      remainingFastGenerations: 0,
+      weeklyLimit,
+      isPro: false,
+    };
   }
 
   const remaining = Math.max(0, weeklyLimit - usage.count);
@@ -82,23 +98,25 @@ export async function canUseFastGeneration(
 export async function recordFastGenerationUsage(userId: string): Promise<void> {
   const weekStart = getWeekStart();
 
-  await db.fastGenerationUsage.upsert({
-    where: {
-      userId_weekStart: {
+  await safeDbOperation(async () => {
+    return await db.fastGenerationUsage.upsert({
+      where: {
+        userId_weekStart: {
+          userId,
+          weekStart,
+        },
+      },
+      update: {
+        count: {
+          increment: 1,
+        },
+      },
+      create: {
         userId,
         weekStart,
+        count: 1,
       },
-    },
-    update: {
-      count: {
-        increment: 1,
-      },
-    },
-    create: {
-      userId,
-      weekStart,
-      count: 1,
-    },
+    });
   });
 }
 
@@ -117,13 +135,15 @@ export async function getFastGenerationStatus(userId: string, isPro: boolean) {
     };
   }
 
-  const usage = await db.fastGenerationUsage.findUnique({
-    where: {
-      userId_weekStart: {
-        userId,
-        weekStart,
+  const usage = await safeDbOperation(async () => {
+    return await db.fastGenerationUsage.findUnique({
+      where: {
+        userId_weekStart: {
+          userId,
+          weekStart,
+        },
       },
-    },
+    });
   });
 
   const usedThisWeek = usage?.count || 0;

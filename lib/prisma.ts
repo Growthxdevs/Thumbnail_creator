@@ -11,6 +11,42 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Check if DATABASE_URL is using a connection pooler (PgBouncer)
+// Supabase pooler URLs typically contain "pooler" in the hostname
+const isUsingPooler =
+  process.env.DATABASE_URL?.includes("pooler") ||
+  process.env.DATABASE_URL?.includes("pgbouncer");
+
+// Prepare connection URL with proper pooler parameters if needed
+let connectionUrl = process.env.DATABASE_URL;
+if (isUsingPooler) {
+  // For Prisma with PgBouncer connection pooler in serverless environments:
+  // We need to add connection_limit=1 to prevent multiple PrismaClient instances
+  // from creating prepared statements on the same pooled connection
+  // This is critical for preventing "prepared statement already exists" errors
+
+  const hasQueryParams = connectionUrl.includes("?");
+  const separator = hasQueryParams ? "&" : "?";
+
+  // Add connection_limit=1 first (most important - limits to 1 connection per PrismaClient instance)
+  if (!connectionUrl.includes("connection_limit=")) {
+    connectionUrl = `${connectionUrl}${separator}connection_limit=1`;
+    // Update separator for next param
+    const newHasQueryParams = connectionUrl.includes("?");
+    const newSeparator = newHasQueryParams ? "&" : "?";
+
+    // Add pgbouncer=true if not present (helps Prisma understand it's using PgBouncer)
+    if (!connectionUrl.includes("pgbouncer=true")) {
+      connectionUrl = `${connectionUrl}${newSeparator}pgbouncer=true`;
+    }
+  } else {
+    // connection_limit already exists, just add pgbouncer=true if needed
+    if (!connectionUrl.includes("pgbouncer=true")) {
+      connectionUrl = `${connectionUrl}${separator}pgbouncer=true`;
+    }
+  }
+}
+
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -18,6 +54,11 @@ export const db =
       process.env.NODE_ENV === "development"
         ? ["query", "error", "warn"]
         : ["error"],
+    datasources: {
+      db: {
+        url: connectionUrl,
+      },
+    },
   });
 
 // Always use singleton pattern to prevent multiple PrismaClient instances
