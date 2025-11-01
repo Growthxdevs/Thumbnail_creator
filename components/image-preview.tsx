@@ -71,7 +71,7 @@ function ImagePreview({
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
 
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,43 +120,68 @@ function ImagePreview({
     const offsetX = mouseX - currentTextX;
     const offsetY = mouseY - currentTextY;
 
-    setDragOffset({ x: offsetX, y: offsetY });
+    dragOffsetRef.current = { x: offsetX, y: offsetY };
     setIsDragging(true);
 
     // Prevent text selection during drag
     e.preventDefault();
   };
 
-  // Function to handle mouse move during drag
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Handle document-level mouse move for smooth dragging
+  useEffect(() => {
     if (!isDragging || !resultImage || isCleared || !text) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!compositionRef.current) return;
 
-    // Apply offset to get the actual text position
-    const textX = mouseX - dragOffset.x;
-    const textY = mouseY - dragOffset.y;
+      const rect = compositionRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
 
-    // Convert to percentages (0-100)
-    const horizontalPercent = (textX / rect.width) * 100;
-    const verticalPercent = (textY / rect.height) * 100;
+      // Apply offset to get the actual text position
+      const textX = mouseX - dragOffsetRef.current.x;
+      const textY = mouseY - dragOffsetRef.current.y;
 
-    // Clamp values between 0 and 100
-    const clampedHorizontal = Math.max(0, Math.min(100, horizontalPercent));
-    const clampedVertical = Math.max(0, Math.min(100, verticalPercent));
+      // Convert to percentages (0-100)
+      const horizontalPercent = (textX / rect.width) * 100;
+      const verticalPercent = (textY / rect.height) * 100;
 
-    setHorizontalPosition(clampedHorizontal);
-    setVerticalPosition(clampedVertical);
-  };
+      // Clamp values between 0 and 100
+      const clampedHorizontal = Math.max(0, Math.min(100, horizontalPercent));
+      const clampedVertical = Math.max(0, Math.min(100, verticalPercent));
 
-  // Function to handle mouse up to end drag
+      setHorizontalPosition(clampedHorizontal);
+      setVerticalPosition(clampedVertical);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    // Add document-level event listeners for smooth dragging
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [
+    isDragging,
+    resultImage,
+    isCleared,
+    text,
+    setHorizontalPosition,
+    setVerticalPosition,
+  ]);
+
+  // Function to handle mouse up to end drag (fallback)
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  // Function to handle mouse leave to end drag
+  // Function to handle mouse leave to end drag (fallback)
   const handleMouseLeave = () => {
     setIsDragging(false);
   };
@@ -435,7 +460,6 @@ function ImagePreview({
             minHeight: "400px",
           }}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           title={
