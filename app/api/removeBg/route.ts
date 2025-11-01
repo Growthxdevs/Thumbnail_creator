@@ -189,10 +189,8 @@ export async function POST(req: Request) {
       console.log("Delay completed");
     }
 
-    // Try multiple free APIs in order of preference
+    // Option 0: Your custom Hugging Face space using Gradio client (first option - always use)
     let resultImage = null;
-
-    // Option 1: Your custom Hugging Face space using Gradio client
     if (!resultImage) {
       try {
         console.log(
@@ -206,8 +204,10 @@ export async function POST(req: Request) {
         // Import and use Gradio client
         const { Client } = await import("@gradio/client");
 
-        // Connect to your space
-        const client = await Client.connect("koushik779/bg-remover");
+        // Connect to your space (use environment variable or default)
+        const hfSpaceName =
+          process.env.HUGGINGFACE_SPACE_NAME || "GrowthXDev/rembg2";
+        const client = await Client.connect(hfSpaceName);
 
         // Make prediction
         const result = await client.predict("/predict", {
@@ -252,9 +252,46 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.log(
-          "Your custom Hugging Face space with Gradio client failed, trying next option:",
+          "Hugging Face Gradio client failed, trying Supabase Edge Function:",
           error instanceof Error ? error.message : String(error)
         );
+      }
+    }
+
+    // Option 1: Supabase Edge Function (fallback if Gradio client fails - FREE, runs 24/7)
+    if (
+      !resultImage &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.SUPABASE_ANON_KEY
+    ) {
+      try {
+        console.log("Trying Supabase Edge Function...");
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/remove-background`,
+          {
+            image: base64Image,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+              apikey: process.env.SUPABASE_ANON_KEY,
+            },
+            timeout: 60000, // 60 seconds timeout for WASM processing
+          }
+        );
+        if (response.data && response.data.success && response.data.image) {
+          resultImage = response.data.image;
+          console.log("✅ Successfully used Supabase Edge Function");
+        } else {
+          throw new Error("Invalid response from Supabase Edge Function");
+        }
+      } catch (error) {
+        console.log(
+          "Supabase Edge Function failed, trying next option:",
+          error instanceof Error ? error.message : String(error)
+        );
+        // Continue to next option instead of throwing
       }
     }
 
@@ -386,6 +423,7 @@ export async function POST(req: Request) {
       //   "Background removal services are temporarily unavailable. Please try again later or contact support."
       // );
     }
+    // End of fallback options
 
     // Cache the result for future use
     if (!global.imageCache) {
