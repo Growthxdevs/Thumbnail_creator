@@ -17,5 +17,28 @@ export function useCreditInit() {
     }
   }, [session?.user?.credits, setCredits]);
 
+  useEffect(() => {
+    // Listen for credits update events
+    const handleCreditsUpdate = async () => {
+      try {
+        const response = await fetch("/api/user-subscription");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.credits !== undefined) {
+            setCredits(data.credits);
+          }
+        }
+      } catch (error) {
+        console.error("Error refreshing credits:", error);
+      }
+    };
+
+    window.addEventListener("creditsUpdated", handleCreditsUpdate);
+
+    return () => {
+      window.removeEventListener("creditsUpdated", handleCreditsUpdate);
+    };
+  }, [setCredits]);
+
   return { credits };
 }

@@ -14,12 +14,14 @@ interface RazorpayPaymentProps {
   planType?: string;
   onSuccess?: (paymentId: string) => void;
   onError?: (error: any) => void;
+  onPaymentStart?: () => void;
 }
 
 export default function RazorpayPayment({
   planType = "pro",
   onSuccess,
   onError,
+  onPaymentStart,
 }: RazorpayPaymentProps) {
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +62,9 @@ export default function RazorpayPayment({
 
       const { orderId, amount, currency, key, paymentId } =
         await response.json();
+
+      // Notify parent that payment is starting (close plan modal)
+      onPaymentStart?.();
 
       // Razorpay options
       const options = {
@@ -115,6 +120,7 @@ export default function RazorpayPayment({
         modal: {
           ondismiss: function () {
             setLoading(false);
+            // Reset loading state when modal is dismissed
           },
         },
       };

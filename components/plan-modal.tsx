@@ -11,13 +11,19 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, Sparkles, X, Loader2 } from "lucide-react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import RazorpayPayment from "./razorpay-payment";
 import PaymentSuccess from "./payment-success";
+import { useCreditStore } from "@/stores/credit-store";
 
-export default function PlanModal() {
+interface PlanModalProps {
+  onPaymentSuccess?: () => void;
+}
+
+export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
   const { data: session } = useSession();
+  const { setCredits } = useCreditStore();
   const [open, setOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [successPaymentId, setSuccessPaymentId] = useState<string>("");
@@ -26,10 +32,12 @@ export default function PlanModal() {
     currentPlanType?: "free" | "pro" | "pro_yearly";
     credits?: number;
   } | null>(null);
+  const [loadingUserData, setLoadingUserData] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoadingUserData(true);
         const response = await fetch("/api/user-subscription");
         if (response.ok) {
           const data = await response.json();
@@ -37,6 +45,8 @@ export default function PlanModal() {
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+      } finally {
+        setLoadingUserData(false);
       }
     };
 
@@ -45,16 +55,40 @@ export default function PlanModal() {
     }
   }, [session, open]);
 
-  const handlePaymentSuccess = (paymentId: string) => {
+  const handlePaymentSuccess = async (paymentId: string) => {
     console.log("Payment successful:", paymentId);
     setSuccessPaymentId(paymentId);
     setPaymentSuccess(true);
     setOpen(false);
-    // Refresh user data
-    fetch("/api/user-subscription")
-      .then((res) => res.json())
-      .then((data) => setUserData(data))
-      .catch(console.error);
+
+    // Wait a moment to ensure payment is processed in the database
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Refresh user data and update credit store
+    try {
+      const response = await fetch("/api/user-subscription");
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+
+        // Update credit store immediately
+        if (data.credits !== undefined) {
+          setCredits(data.credits);
+        }
+
+        // Notify parent component to refresh
+        onPaymentSuccess?.();
+
+        // Force session refresh by reloading (optional, can be removed if using session refresh)
+        // This ensures all components that depend on session get updated credits
+        if (typeof window !== "undefined") {
+          // Trigger a custom event for components to refresh
+          window.dispatchEvent(new CustomEvent("creditsUpdated"));
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
   };
 
   const handlePaymentError = (error: unknown) => {
@@ -213,7 +247,16 @@ export default function PlanModal() {
 
                 {/* Payment Options */}
                 <div className="mt-auto pt-2 space-y-2.5 flex-shrink-0">
-                  {userData?.currentPlanType === "pro" ? (
+                  {loadingUserData ? (
+                    <Button
+                      variant="outline"
+                      className="w-full h-10 text-sm border-blue-500 text-white bg-blue-500/10 flex items-center justify-center"
+                      disabled
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading...
+                    </Button>
+                  ) : userData?.currentPlanType === "pro" ? (
                     <Button
                       variant="outline"
                       className="w-full h-10 text-sm hover:scale-105 transition-transform border-blue-500 text-white hover:bg-blue-900/20 bg-blue-500/10"
@@ -260,6 +303,7 @@ export default function PlanModal() {
                         planType="pro"
                         onSuccess={handlePaymentSuccess}
                         onError={handlePaymentError}
+                        onPaymentStart={() => setOpen(false)}
                       />
                     </>
                   )}
@@ -341,7 +385,16 @@ export default function PlanModal() {
 
                 {/* Payment Options */}
                 <div className="mt-auto pt-2 space-y-2.5 flex-shrink-0">
-                  {userData?.currentPlanType === "pro_yearly" ? (
+                  {loadingUserData ? (
+                    <Button
+                      variant="outline"
+                      className="w-full h-10 text-sm border-yellow-500 text-white bg-yellow-500/10 flex items-center justify-center"
+                      disabled
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading...
+                    </Button>
+                  ) : userData?.currentPlanType === "pro_yearly" ? (
                     <Button
                       variant="outline"
                       className="w-full h-10 text-sm hover:scale-105 transition-transform border-yellow-500 text-white hover:bg-yellow-900/20 bg-yellow-500/10"
@@ -388,6 +441,7 @@ export default function PlanModal() {
                         planType="pro_yearly"
                         onSuccess={handlePaymentSuccess}
                         onError={handlePaymentError}
+                        onPaymentStart={() => setOpen(false)}
                       />
                     </>
                   )}

@@ -42,11 +42,19 @@ export const razorpayConfig = {
 export const plans = {
   pro: {
     id: "pro_monthly",
-    name: "Professional Plan",
-    amount: 300, // ₹3 in paise (300 paise = ₹3)
+    name: "Professional Plan - Monthly",
+    amount: 99, // ₹99 in rupees (will be converted to 9900 paise)
     currency: "INR",
     interval: "monthly",
-    description: "Unlimited generations, all fonts, priority support",
+    description: "250 credits per month, all fonts, priority support",
+  },
+  pro_yearly: {
+    id: "pro_yearly",
+    name: "Professional Plan - Yearly",
+    amount: 999, // ₹999 in rupees (will be converted to 99900 paise)
+    currency: "INR",
+    interval: "yearly",
+    description: "3,000 credits per year, all fonts, priority support",
   },
 };
 

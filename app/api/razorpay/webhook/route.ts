@@ -54,27 +54,41 @@ export async function POST(req: Request) {
 
 async function handlePaymentCaptured(payment: any) {
   try {
-    // Find user by payment ID or order ID
-    const user = await db.user.findFirst({
+    // Find payment record to get planType
+    const paymentRecord = await db.payment.findFirst({
       where: {
-        OR: [
-          { subscriptionId: payment.id },
-          { subscriptionId: payment.order_id },
-        ],
+        razorpayPaymentId: payment.id,
+        OR: [{ razorpayOrderId: payment.order_id }],
+      },
+      select: {
+        userId: true,
+        planType: true,
       },
     });
 
-    if (user) {
-      await db.user.update({
-        where: { id: user.id },
-        data: {
-          isPro: true,
-          subscriptionId: payment.id,
-        },
-      });
-
-      console.log(`Payment captured for user ${user.id}`);
+    if (!paymentRecord) {
+      console.log(`Payment record not found for payment ${payment.id}`);
+      return;
     }
+
+    // Determine credit amount based on plan type
+    const creditsToAdd = paymentRecord.planType === "pro_yearly" ? 3000 : 250;
+
+    // Update user subscription and add credits
+    await db.user.update({
+      where: { id: paymentRecord.userId },
+      data: {
+        isPro: true,
+        subscriptionId: payment.id,
+        credits: {
+          increment: creditsToAdd,
+        },
+      },
+    });
+
+    console.log(
+      `Payment captured for user ${paymentRecord.userId}, added ${creditsToAdd} credits`
+    );
   } catch (error) {
     console.error("Error handling payment captured:", error);
   }

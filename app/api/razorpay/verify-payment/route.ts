@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth-server";
 import { verifyPaymentSignature } from "@/lib/razorpay";
 import { db } from "@/lib/prisma";
+import { safeDbOperation } from "@/lib/db-utils";
 
 export async function POST(req: Request) {
   try {
@@ -32,28 +33,47 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!db) {
+      return NextResponse.json(
+        { message: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+
     // Update payment record
-    const updatedPayment = await db.payment.update({
-      where: { id: paymentId },
-      data: {
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-        status: "captured",
-      },
+    await safeDbOperation(async () => {
+      if (!db) throw new Error("Database connection not available");
+      return await db.payment.update({
+        where: { id: paymentId },
+        data: {
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
+          status: "captured",
+        },
+      });
     });
 
-    // Update user subscription
-    const updatedUser = await db.user.update({
-      where: { id: session.user.id },
-      data: {
-        isPro: true,
-        subscriptionId: razorpay_payment_id,
-      },
-      select: {
-        isPro: true,
-        subscriptionId: true,
-        credits: true,
-      },
+    // Determine credit amount based on plan type
+    const creditsToAdd = planType === "pro_yearly" ? 3000 : 250;
+
+    // Update user subscription and add credits
+    const updatedUser = await safeDbOperation(async () => {
+      if (!db) throw new Error("Database connection not available");
+      return await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          isPro: true,
+          subscriptionId: razorpay_payment_id,
+          credits: {
+            increment: creditsToAdd,
+          },
+        },
+        select: {
+          isPro: true,
+          subscriptionId: true,
+          credits: true,
+        },
+      });
     });
 
     return NextResponse.json(
