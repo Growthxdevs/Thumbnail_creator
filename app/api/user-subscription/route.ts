@@ -27,7 +27,35 @@ export async function GET() {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user, { status: 200 });
+    // Get the latest successful payment to determine plan type
+    const latestPayment = await safeDbOperation(async () => {
+      return await db.payment.findFirst({
+        where: {
+          userId: session.user.id,
+          status: "captured",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          planType: true,
+        },
+      });
+    });
+
+    // Determine current plan type
+    let currentPlanType: "free" | "pro" | "pro_yearly" = "free";
+    if (user.isPro) {
+      currentPlanType = latestPayment?.planType === "pro_yearly" ? "pro_yearly" : "pro";
+    }
+
+    return NextResponse.json(
+      {
+        ...user,
+        currentPlanType,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching user subscription:", error);
     return NextResponse.json(

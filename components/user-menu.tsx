@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCreditStore } from "@/stores/credit-store";
 import { useCreditInit } from "@/hooks/use-credit-init";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +26,7 @@ import fireAnimation from "@/public/assets/animations/fire-animation.json";
 
 export default function UserMenu() {
   const { data: session } = useSession();
+  const router = useRouter();
   const { credits } = useCreditStore();
   useCreditInit(); // Initialize credits from session
 
@@ -131,7 +133,7 @@ export default function UserMenu() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/billing")}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Billing</span>
               </DropdownMenuItem>

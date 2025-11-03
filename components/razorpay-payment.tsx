@@ -128,11 +128,16 @@ export default function RazorpayPayment({
     }
   };
 
+  const isYearly = planType === "pro_yearly";
+  const buttonClassName = isYearly
+    ? "w-full h-10 text-sm bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-black font-semibold shadow-md shadow-yellow-500/50"
+    : "w-full h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white";
+
   return (
     <Button
       onClick={handlePayment}
       disabled={loading}
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+      className={buttonClassName}
     >
       {loading ? (
         <>
