@@ -39,7 +39,8 @@ export const razorpayConfig = {
 };
 
 // Plan configurations
-export const plans = {
+// INR prices (for India)
+export const plansINR = {
   pro: {
     id: "pro_monthly",
     name: "Professional Plan - Monthly",
@@ -58,14 +59,42 @@ export const plans = {
   },
 };
 
+// USD prices (for international)
+export const plansUSD = {
+  pro: {
+    id: "pro_monthly",
+    name: "Professional Plan - Monthly",
+    amount: 3, // $3.00 per month
+    currency: "USD",
+    interval: "monthly",
+    description: "40 credits per month, all fonts, priority support",
+  },
+  pro_yearly: {
+    id: "pro_yearly",
+    name: "Professional Plan - Yearly",
+    amount: 30, // $30.00 per year (equivalent to $2.50/month - 17% discount)
+    currency: "USD",
+    interval: "yearly",
+    description: "480 credits per year, all fonts, priority support",
+  },
+};
+
+// Default plans (keeping for backward compatibility)
+export const plans = plansINR;
+
 // Helper function to create order
 export async function createRazorpayOrder(
   amount: number,
   currency: string = "INR"
 ) {
   try {
+    // Convert amount to smallest currency unit
+    // INR: paise (multiply by 100)
+    // USD: cents (multiply by 100)
+    const amountInSmallestUnit = Math.round(amount * 100);
+
     const order = await razorpay.orders.create({
-      amount: amount * 100, // Convert to paise
+      amount: amountInSmallestUnit,
       currency,
       receipt: `receipt_${Date.now()}`,
       notes: {

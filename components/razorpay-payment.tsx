@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useCurrency } from "@/hooks/use-currency";
 
 declare global {
   interface Window {
@@ -24,6 +25,7 @@ export default function RazorpayPayment({
   onPaymentStart,
 }: RazorpayPaymentProps) {
   const [loading, setLoading] = useState(false);
+  const { currency } = useCurrency();
 
   const loadRazorpayScript = (): Promise<void> => {
     return new Promise((resolve) => {
@@ -53,15 +55,20 @@ export default function RazorpayPayment({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ planType }),
+        body: JSON.stringify({ planType, currency }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to create order");
       }
 
-      const { orderId, amount, currency, key, paymentId } =
-        await response.json();
+      const {
+        orderId,
+        amount,
+        currency: responseCurrency,
+        key,
+        paymentId,
+      } = await response.json();
 
       // Notify parent that payment is starting (close plan modal)
       onPaymentStart?.();
@@ -70,15 +77,13 @@ export default function RazorpayPayment({
       const options = {
         key: key,
         amount: amount,
-        currency: currency,
+        currency: responseCurrency,
         name: "Text with Image",
         description: "Professional Plan Subscription",
         order_id: orderId,
-        // Add test mode configuration
         theme: {
           color: "#2563eb",
         },
-        // Enable test mode features
         notes: {
           plan: "pro_monthly",
         },
@@ -113,9 +118,6 @@ export default function RazorpayPayment({
         prefill: {
           name: "User",
           email: "user@example.com",
-        },
-        theme: {
-          color: "#2563eb",
         },
         modal: {
           ondismiss: function () {

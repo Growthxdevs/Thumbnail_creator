@@ -16,6 +16,8 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import RazorpayPayment from "./razorpay-payment";
 import PaymentSuccess from "./payment-success";
 import { useCreditStore } from "@/stores/credit-store";
+import { useCurrency } from "@/hooks/use-currency";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PlanModalProps {
   onPaymentSuccess?: () => void;
@@ -24,6 +26,7 @@ interface PlanModalProps {
 export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
   const { data: session } = useSession();
   const { setCredits } = useCreditStore();
+  const { currency, symbol, isIndia, isLoading } = useCurrency();
   const [open, setOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [successPaymentId, setSuccessPaymentId] = useState<string>("");
@@ -137,10 +140,14 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
                 </p>
               </CardHeader>
               <CardContent className="space-y-4 px-3 pb-3 flex flex-col flex-grow min-h-0">
-                <p className="text-2xl font-bold text-white">
-                  ₹0
-                  <span className="text-sm font-normal text-gray-400">/mo</span>
-                </p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-20 bg-gray-700" />
+                ) : (
+                  <p className="text-2xl font-bold text-white">
+                    {symbol}0
+                    <span className="text-sm font-normal text-gray-400">/mo</span>
+                  </p>
+                )}
 
                 <div className="space-y-2 flex-grow">
                   <p className="text-xs font-semibold text-gray-300">
@@ -212,15 +219,37 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
 
               <CardContent className="space-y-4 px-3 pb-3 flex flex-col flex-grow min-h-0">
                 <div>
-                  <p className="text-2xl font-bold text-white">
-                    ₹99
-                    <span className="text-sm font-normal text-gray-400">
-                      /mo
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-400 line-through mt-1">
-                    Regular: ₹199/month
-                  </p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-8 w-24 bg-gray-700 mb-2" />
+                      <Skeleton className="h-4 w-32 bg-gray-700" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-white">
+                        {isIndia ? (
+                          <>
+                            ₹99
+                            <span className="text-sm font-normal text-gray-400">
+                              /mo
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            $3.00
+                            <span className="text-sm font-normal text-gray-400">
+                              /mo
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-400 line-through mt-1">
+                        {isIndia
+                          ? "Regular: ₹199/month"
+                          : "Regular: $6.00/month"}
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="bg-blue-500/20 p-2.5 rounded-lg border border-blue-500/50">
@@ -369,18 +398,43 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
 
               <CardContent className="space-y-4 px-3 pb-3 flex flex-col flex-grow min-h-0 relative z-10">
                 <div>
-                  <p className="text-2xl font-bold text-white">
-                    ₹999
-                    <span className="text-sm font-normal text-gray-400">
-                      /year
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-400 line-through mt-1">
-                    Regular: ₹1,999/year
-                  </p>
-                  <p className="text-xs text-blue-400 font-medium mt-1">
-                    Save ₹1,189 per year!
-                  </p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-8 w-28 bg-gray-700 mb-2" />
+                      <Skeleton className="h-4 w-36 bg-gray-700 mb-1" />
+                      <Skeleton className="h-4 w-32 bg-gray-700" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-white">
+                        {isIndia ? (
+                          <>
+                            ₹999
+                            <span className="text-sm font-normal text-gray-400">
+                              /year
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            $30.00
+                            <span className="text-sm font-normal text-gray-400">
+                              /year
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-400 line-through mt-1">
+                        {isIndia
+                          ? "Regular: ₹1,999/year"
+                          : "Regular: $72.00/year"}
+                      </p>
+                      <p className="text-xs text-blue-400 font-medium mt-1">
+                        {isIndia
+                          ? "Save ₹1,189 per year!"
+                          : "Save $42.00 per year!"}
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="bg-blue-500/20 p-2.5 rounded-lg border border-blue-500/50">

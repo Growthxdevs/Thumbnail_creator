@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth-server";
-import { createRazorpayOrder, plans } from "@/lib/razorpay";
+import { createRazorpayOrder, plansINR, plansUSD } from "@/lib/razorpay";
 import { db } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -10,7 +10,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { planType = "pro" } = await req.json();
+    const { planType = "pro", currency = "INR" } = await req.json();
+
+    // Select the appropriate plan based on currency
+    const plans = currency === "USD" ? plansUSD : plansINR;
 
     if (!plans[planType as keyof typeof plans]) {
       return NextResponse.json(
