@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { verifyPaymentSignature } from "@/lib/razorpay";
 import { db } from "@/lib/prisma";
 import crypto from "crypto";
 
@@ -61,6 +60,7 @@ async function handlePaymentCaptured(payment: any) {
         OR: [{ razorpayOrderId: payment.order_id }],
       },
       select: {
+        id: true,
         userId: true,
         planType: true,
       },
@@ -71,8 +71,26 @@ async function handlePaymentCaptured(payment: any) {
       return;
     }
 
+    // Check if this is the user's first successful payment
+    // Exclude current payment by its database ID
+    const previousPayments = await db.payment.findMany({
+      where: {
+        userId: paymentRecord.userId,
+        status: "captured",
+        id: { not: paymentRecord.id }, // Exclude current payment
+      },
+    });
+
+    const isFirstTimeUser = previousPayments.length === 0;
+
     // Determine credit amount based on plan type
-    const creditsToAdd = paymentRecord.planType === "pro_yearly" ? 3000 : 250;
+    let creditsToAdd = paymentRecord.planType === "pro_yearly" ? 480 : 40;
+
+    // Add extra credits for first-time users
+    if (isFirstTimeUser) {
+      // Yearly plan gets 50 bonus credits, monthly gets 10
+      creditsToAdd += paymentRecord.planType === "pro_yearly" ? 50 : 10;
+    }
 
     // Update user subscription and add credits
     await db.user.update({
@@ -86,8 +104,20 @@ async function handlePaymentCaptured(payment: any) {
       },
     });
 
+    const bonusCredits = isFirstTimeUser
+      ? paymentRecord.planType === "pro_yearly"
+        ? 50
+        : 10
+      : 0;
+
     console.log(
-      `Payment captured for user ${paymentRecord.userId}, added ${creditsToAdd} credits`
+      `Payment captured for user ${
+        paymentRecord.userId
+      }, added ${creditsToAdd} credits${
+        isFirstTimeUser
+          ? ` (includes ${bonusCredits} bonus credits for first-time user)`
+          : ""
+      }`
     );
   } catch (error) {
     console.error("Error handling payment captured:", error);

@@ -31,6 +31,7 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
     isPro?: boolean;
     currentPlanType?: "free" | "pro" | "pro_yearly";
     credits?: number;
+    isFirstTimeUser?: boolean;
   } | null>(null);
   const [loadingUserData, setLoadingUserData] = useState(false);
 
@@ -223,17 +224,42 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
                 </div>
 
                 <div className="bg-blue-500/20 p-2.5 rounded-lg border border-blue-500/50">
-                  <p className="text-base font-bold text-blue-300">
-                    250 Credits
-                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-base font-bold text-blue-300">
+                      {userData?.isFirstTimeUser ? "50 Credits" : "40 Credits"}
+                    </p>
+                    {userData?.isFirstTimeUser && (
+                      <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black text-xs font-bold px-2 py-0.5 animate-pulse">
+                        +10 BONUS
+                      </Badge>
+                    )}
+                  </div>
+                  {userData?.isFirstTimeUser && (
+                    <p className="text-xs text-blue-200 mt-1">
+                      (40 + 10 bonus credits)
+                    </p>
+                  )}
                   <p className="text-xs text-blue-200">
                     No daily limit - use anytime
                   </p>
+                  {userData?.isFirstTimeUser && (
+                    <div className="mt-2 p-1.5 bg-yellow-500/20 border border-yellow-400/50 rounded">
+                      <p className="text-xs font-bold text-yellow-300">
+                        🎉{" "}
+                        <span className="text-yellow-400 text-sm font-extrabold">
+                          +10
+                        </span>{" "}
+                        EXTRA CREDITS FOR FIRST-TIME USERS!
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 flex-grow">
                   {[
-                    "250 credits per month (use anytime)",
+                    userData?.isFirstTimeUser
+                      ? "50 credits per month (40 + 10 bonus)"
+                      : "40 credits per month (use anytime)",
                     "Access to all 250+ premium fonts",
                     "Priority support",
                     "Advanced customization options",
@@ -358,20 +384,47 @@ export default function PlanModal({ onPaymentSuccess }: PlanModalProps = {}) {
                 </div>
 
                 <div className="bg-blue-500/20 p-2.5 rounded-lg border border-blue-500/50">
-                  <p className="text-base font-bold text-blue-300">
-                    3,000 Credits
-                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-base font-bold text-blue-300">
+                      {userData?.isFirstTimeUser
+                        ? "530 Credits"
+                        : "480 Credits"}
+                    </p>
+                    {userData?.isFirstTimeUser && (
+                      <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black text-xs font-bold px-2 py-0.5 animate-pulse">
+                        +50 BONUS
+                      </Badge>
+                    )}
+                  </div>
+                  {userData?.isFirstTimeUser && (
+                    <p className="text-xs text-blue-200 mt-1">
+                      (480 + 50 bonus credits)
+                    </p>
+                  )}
                   <p className="text-xs text-blue-200">
                     No daily limit - use anytime
                   </p>
                   <p className="text-xs text-blue-400 mt-1 font-medium">
-                    (250 credits × 12 months)
+                    (40 credits × 12 months)
                   </p>
+                  {userData?.isFirstTimeUser && (
+                    <div className="mt-2 p-1.5 bg-yellow-500/20 border border-yellow-400/50 rounded">
+                      <p className="text-xs font-bold text-yellow-300">
+                        🎉{" "}
+                        <span className="text-yellow-400 text-sm font-extrabold">
+                          +50
+                        </span>{" "}
+                        EXTRA CREDITS FOR FIRST-TIME USERS!
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 flex-grow">
                   {[
-                    "3,000 credits per year (use anytime)",
+                    userData?.isFirstTimeUser
+                      ? "530 credits per year (480 + 50 bonus)"
+                      : "480 credits per year (use anytime)",
                     "Access to all 250+ premium fonts",
                     "Priority support",
                     "Advanced customization options",

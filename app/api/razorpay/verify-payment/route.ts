@@ -53,8 +53,28 @@ export async function POST(req: Request) {
       });
     });
 
+    // Check if this is the user's first successful payment
+    const previousPayments = await safeDbOperation(async () => {
+      if (!db) throw new Error("Database connection not available");
+      return await db.payment.findMany({
+        where: {
+          userId: session.user.id,
+          status: "captured",
+          id: { not: paymentId }, // Exclude current payment
+        },
+      });
+    });
+
+    const isFirstTimeUser = (previousPayments?.length ?? 0) === 0;
+
     // Determine credit amount based on plan type
-    const creditsToAdd = planType === "pro_yearly" ? 3000 : 250;
+    let creditsToAdd = planType === "pro_yearly" ? 480 : 40;
+
+    // Add extra credits for first-time users
+    if (isFirstTimeUser) {
+      // Yearly plan gets 50 bonus credits, monthly gets 10
+      creditsToAdd += planType === "pro_yearly" ? 50 : 10;
+    }
 
     // Update user subscription and add credits
     const updatedUser = await safeDbOperation(async () => {

@@ -46,13 +46,27 @@ export async function GET() {
     // Determine current plan type
     let currentPlanType: "free" | "pro" | "pro_yearly" = "free";
     if (user.isPro) {
-      currentPlanType = latestPayment?.planType === "pro_yearly" ? "pro_yearly" : "pro";
+      currentPlanType =
+        latestPayment?.planType === "pro_yearly" ? "pro_yearly" : "pro";
     }
+
+    // Check if user is a first-time user (no previous successful payments)
+    const previousPayments = await safeDbOperation(async () => {
+      return await db.payment.findMany({
+        where: {
+          userId: session.user.id,
+          status: "captured",
+        },
+      });
+    });
+
+    const isFirstTimeUser = (previousPayments?.length ?? 0) === 0;
 
     return NextResponse.json(
       {
         ...user,
         currentPlanType,
+        isFirstTimeUser,
       },
       { status: 200 }
     );

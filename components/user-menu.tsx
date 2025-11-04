@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, CreditCard, Sparkles, Crown, Zap } from "lucide-react";
+import { LogOut, CreditCard, Sparkles, Crown, Zap } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -117,7 +117,7 @@ export default function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <TooltipProvider>
+        {/* <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuItem>
@@ -129,7 +129,7 @@ export default function UserMenu() {
               <p>View and edit your profile</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider> */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

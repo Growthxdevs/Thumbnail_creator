@@ -46,7 +46,7 @@ export const plans = {
     amount: 99, // ₹99 in rupees (will be converted to 9900 paise)
     currency: "INR",
     interval: "monthly",
-    description: "250 credits per month, all fonts, priority support",
+    description: "40 credits per month, all fonts, priority support",
   },
   pro_yearly: {
     id: "pro_yearly",
@@ -54,7 +54,7 @@ export const plans = {
     amount: 999, // ₹999 in rupees (will be converted to 99900 paise)
     currency: "INR",
     interval: "yearly",
-    description: "3,000 credits per year, all fonts, priority support",
+    description: "480 credits per year, all fonts, priority support",
   },
 };
 
