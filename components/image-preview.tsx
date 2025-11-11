@@ -4,6 +4,8 @@ import Image from "next/image";
 import { Download, Loader2, X } from "lucide-react";
 import { Button } from "./ui/button";
 import domtoimage from "dom-to-image";
+import { TextElement } from "./remove-background";
+import { fonts } from "@/lib/fonts";
 
 type ImagePreviewProps = {
   loading: boolean;
@@ -35,11 +37,17 @@ type ImagePreviewProps = {
   textAlign: "left" | "center" | "right";
   textShadow: number;
   textAboveImage: boolean;
+  // Multiple text elements support
+  textElements?: TextElement[];
+  selectedTextId?: string;
+  onTextElementUpdate?: (id: string, updates: Partial<TextElement>) => void;
+  onTextElementSelect?: (id: string) => void;
 };
 
 function ImagePreview({
   loading,
-  textPositionStyle,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  textPositionStyle: _textPositionStyle, // Legacy prop, kept for backward compatibility
   text,
   textSize,
   textColor,
@@ -67,11 +75,40 @@ function ImagePreview({
   textAlign,
   textShadow,
   textAboveImage,
+  textElements,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  selectedTextId, // Optional prop, kept for API compatibility
+  onTextElementUpdate,
+  onTextElementSelect,
 }: ImagePreviewProps) {
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [draggingTextId, setDraggingTextId] = useState<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+
+  // Use textElements if provided, otherwise fall back to legacy single text
+  const textsToRender = textElements || [
+    {
+      id: "legacy",
+      text,
+      textSize,
+      textColor,
+      horizontalPosition,
+      verticalPosition,
+      rotation: 0,
+      textOpacity: 1,
+      fontFamily: "Arial",
+      outlineWidth,
+      outlineEnabled,
+      outlineColor,
+      outlineTransparency,
+      lineHeight,
+      textAlign,
+      textShadow,
+      textAboveImage,
+    } as TextElement,
+  ];
 
   const compositionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +140,43 @@ function ImagePreview({
     }
   };
 
-  // Function to handle mouse down for starting drag
+  // Function to handle mouse down for starting drag on a specific text element
+  const handleTextMouseDown = (
+    e: React.MouseEvent<HTMLDivElement>,
+    textElement: TextElement
+  ) => {
+    // Only allow dragging if there's a result image
+    if (!resultImage || isCleared || !textElement.text) return;
+
+    // Select this text element if clicking on it
+    if (onTextElementSelect) {
+      onTextElementSelect(textElement.id);
+    }
+
+    const rect = compositionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Calculate current text position in pixels
+    const currentTextX = (textElement.horizontalPosition / 100) * rect.width;
+    const currentTextY = (textElement.verticalPosition / 100) * rect.height;
+
+    // Calculate offset from mouse to text center
+    const offsetX = mouseX - currentTextX;
+    const offsetY = mouseY - currentTextY;
+
+    dragOffsetRef.current = { x: offsetX, y: offsetY };
+    setIsDragging(true);
+    setDraggingTextId(textElement.id);
+
+    // Prevent text selection during drag
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Legacy handler for backward compatibility
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only allow dragging if there's a result image and text to position
     if (!resultImage || isCleared || !text) return;
@@ -122,6 +195,7 @@ function ImagePreview({
 
     dragOffsetRef.current = { x: offsetX, y: offsetY };
     setIsDragging(true);
+    setDraggingTextId("legacy"); // Set legacy ID for backward compatibility
 
     // Prevent text selection during drag
     e.preventDefault();
@@ -129,7 +203,7 @@ function ImagePreview({
 
   // Handle document-level mouse move for smooth dragging
   useEffect(() => {
-    if (!isDragging || !resultImage || isCleared || !text) return;
+    if (!isDragging || !resultImage || isCleared) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!compositionRef.current) return;
@@ -150,12 +224,22 @@ function ImagePreview({
       const clampedHorizontal = Math.max(0, Math.min(100, horizontalPercent));
       const clampedVertical = Math.max(0, Math.min(100, verticalPercent));
 
+      // Always update the text element if we have the handler and draggingTextId
+      if (draggingTextId && onTextElementUpdate) {
+        onTextElementUpdate(draggingTextId, {
+          horizontalPosition: clampedHorizontal,
+          verticalPosition: clampedVertical,
+        });
+      }
+
+      // Also update legacy state for backward compatibility (always update legacy state)
       setHorizontalPosition(clampedHorizontal);
       setVerticalPosition(clampedVertical);
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setDraggingTextId(null);
     };
 
     // Add document-level event listeners for smooth dragging
@@ -171,7 +255,8 @@ function ImagePreview({
     isDragging,
     resultImage,
     isCleared,
-    text,
+    draggingTextId,
+    onTextElementUpdate,
     setHorizontalPosition,
     setVerticalPosition,
   ]);
@@ -179,6 +264,7 @@ function ImagePreview({
   // Function to handle mouse up to end drag (fallback)
   const handleMouseUp = () => {
     setIsDragging(false);
+    setDraggingTextId(null);
   };
 
   // Function to handle mouse leave to end drag (fallback)
@@ -466,7 +552,12 @@ function ImagePreview({
             height: imageHeight ? `${imageHeight}px` : "auto",
             minHeight: "400px",
           }}
-          onMouseDown={handleMouseDown}
+          onMouseDown={(e) => {
+            // Only use legacy handler if we're not using text elements
+            if (!textElements || textElements.length === 0) {
+              handleMouseDown(e);
+            }
+          }}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           title={
@@ -514,98 +605,94 @@ function ImagePreview({
             />
           )}
 
-          {/* Outline text above removeBgImage */}
-          {resultImage && !isCleared && outlineEnabled && (
-            <div
-              className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
-                isDragging ? "scale-105 drop-shadow-lg" : ""
-              }`}
-              style={{
-                ...textPositionStyle,
-                zIndex: 30,
-              }}
-            >
-              <h1
-                className="font-bold whitespace-pre-line"
-                style={{
-                  fontSize: `${textSize}px`,
-                  color: "rgba(0,0,0,0)",
-                  WebkitTextStroke: `${outlineWidth}px ${outlineColor}`,
-                  textShadow: "none",
-                  opacity: outlineTransparency,
-                  lineHeight: lineHeight,
-                  textAlign: textAlign,
-                }}
-              >
-                {text}
-              </h1>
-            </div>
-          )}
-
-          {/* Text over removedBgImage (when no resultImage yet) - HIDDEN BEFORE GENERATION */}
-          {false &&
-            removedBgImage &&
-            !resultImage &&
+          {/* Render all text elements */}
+          {resultImage &&
             !isCleared &&
-            !outlineEnabled && (
-              <div
-                className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
-                  isDragging ? "scale-105 drop-shadow-lg" : ""
-                }`}
-                style={{
-                  ...textPositionStyle,
-                  zIndex: 10,
-                }}
-              >
-                <h1
-                  className="font-bold whitespace-pre-line"
-                  style={{
-                    fontSize: `${textSize}px`,
-                    color: textColor,
-                    lineHeight: lineHeight,
-                    textAlign: textAlign,
-                    textShadow:
-                      textShadow > 0
-                        ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
-                            textShadow * 0.5
-                          }px rgba(0,0,0,0.3)`
-                        : "none",
-                  }}
-                >
-                  {text}
-                </h1>
-              </div>
-            )}
+            textsToRender.map((textElement) => {
+              const isDraggingThis = draggingTextId === textElement.id;
+              const textPositionStyleForElement = {
+                left: `${textElement.horizontalPosition}%`,
+                top: `${textElement.verticalPosition}%`,
+                transform: `translate(-50%, -50%) rotate(${textElement.rotation}deg)`,
+                opacity: textElement.textOpacity,
+                fontFamily:
+                  fonts[textElement.fontFamily as keyof typeof fonts] ||
+                  textElement.fontFamily,
+              };
 
-          {resultImage && !isCleared && (
-            <div
-              className={`absolute flex items-center justify-center w-full transition-all duration-150 ${
-                isDragging ? "scale-105 drop-shadow-lg" : ""
-              }`}
-              style={{
-                ...textPositionStyle,
-                zIndex: textAboveImage ? 30 : 5,
-              }}
-            >
-              <h1
-                className="font-bold whitespace-pre-line"
-                style={{
-                  fontSize: `${textSize}px`,
-                  color: textColor,
-                  lineHeight: lineHeight,
-                  textAlign: textAlign,
-                  textShadow:
-                    textShadow > 0
-                      ? `${textShadow * 0.3}px ${textShadow * 0.7}px ${
-                          textShadow * 0.5
-                        }px rgba(0,0,0,0.3)`
-                      : "none",
-                }}
-              >
-                {text}
-              </h1>
-            </div>
-          )}
+              return (
+                <React.Fragment key={textElement.id}>
+                  {/* Outline text */}
+                  {textElement.outlineEnabled && (
+                    <div
+                      className={`absolute flex items-center justify-center transition-all duration-150 cursor-move ${
+                        isDraggingThis ? "scale-105 drop-shadow-lg" : ""
+                      }`}
+                      style={{
+                        ...textPositionStyleForElement,
+                        zIndex: 40,
+                        pointerEvents: "auto",
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        handleTextMouseDown(e, textElement);
+                      }}
+                    >
+                      <h1
+                        className="font-bold whitespace-pre-line pointer-events-none"
+                        style={{
+                          fontSize: `${textElement.textSize}px`,
+                          color: "rgba(0,0,0,0)",
+                          WebkitTextStroke: `${textElement.outlineWidth}px ${textElement.outlineColor}`,
+                          textShadow: "none",
+                          opacity: textElement.outlineTransparency,
+                          lineHeight: textElement.lineHeight,
+                          textAlign: textElement.textAlign,
+                        }}
+                      >
+                        {textElement.text}
+                      </h1>
+                    </div>
+                  )}
+
+                  {/* Regular text */}
+                  <div
+                    className={`absolute flex items-center justify-center transition-all duration-150 cursor-move ${
+                      isDraggingThis ? "scale-105 drop-shadow-lg" : ""
+                    }`}
+                    style={{
+                      ...textPositionStyleForElement,
+                      zIndex: textElement.textAboveImage ? 40 : 10,
+                      pointerEvents: "auto",
+                    }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleTextMouseDown(e, textElement);
+                    }}
+                  >
+                    <h1
+                      className="font-bold whitespace-pre-line pointer-events-none"
+                      style={{
+                        fontSize: `${textElement.textSize}px`,
+                        color: textElement.textColor,
+                        lineHeight: textElement.lineHeight,
+                        textAlign: textElement.textAlign,
+                        textShadow:
+                          textElement.textShadow > 0
+                            ? `${textElement.textShadow * 0.3}px ${
+                                textElement.textShadow * 0.7
+                              }px ${
+                                textElement.textShadow * 0.5
+                              }px rgba(0,0,0,0.3)`
+                            : "none",
+                      }}
+                    >
+                      {textElement.text}
+                    </h1>
+                  </div>
+                </React.Fragment>
+              );
+            })}
 
           {resultImage && !isCleared && (
             <Image
@@ -613,6 +700,11 @@ function ImagePreview({
               alt="Processed Image"
               fill
               className="object-contain z-20"
+              style={{
+                pointerEvents: textsToRender.some((el) => !el.textAboveImage)
+                  ? "none"
+                  : "auto",
+              }}
               unoptimized
             />
           )}

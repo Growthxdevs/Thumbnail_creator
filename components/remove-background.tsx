@@ -9,6 +9,27 @@ import SaveProjectDialog from "./save-project-dialog";
 // import { Project } from "@/types/project";
 import { useSaveProject } from "@/contexts/save-project-context";
 
+// Text element type
+export type TextElement = {
+  id: string;
+  text: string;
+  textSize: number;
+  textColor: string;
+  horizontalPosition: number;
+  verticalPosition: number;
+  rotation: number;
+  textOpacity: number;
+  fontFamily: string;
+  outlineWidth: number;
+  outlineEnabled: boolean;
+  outlineColor: string;
+  outlineTransparency: number;
+  lineHeight: number;
+  textAlign: "left" | "center" | "right";
+  textShadow: number;
+  textAboveImage: boolean;
+};
+
 // interface RemoveBackgroundProps {
 //   imageUrl: string;
 // }
@@ -17,6 +38,32 @@ export default function RemoveBackground() {
   const { data: session } = useSession();
   const { credits, deductCredits } = useCreditStore();
   useCreditInit(); // Initialize credits from session
+
+  // Multiple text elements support
+  const [textElements, setTextElements] = useState<TextElement[]>([
+    {
+      id: "1",
+      text: "Text",
+      textSize: 200,
+      textColor: "#ffffff",
+      horizontalPosition: 50,
+      verticalPosition: 50,
+      rotation: 0,
+      textOpacity: 1,
+      fontFamily: "Arial",
+      outlineWidth: 2,
+      outlineEnabled: false,
+      outlineColor: "#ffffff",
+      outlineTransparency: 1,
+      lineHeight: 1.2,
+      textAlign: "center",
+      textShadow: 0,
+      textAboveImage: false,
+    },
+  ]);
+  const [selectedTextId, setSelectedTextId] = useState<string>("1");
+
+  // Legacy state for backward compatibility (will be removed)
   const [text, setText] = useState("Text");
   const [textSize, setTextSize] = useState(200);
   const [textColor, setTextColor] = useState("#ffffff");
@@ -25,15 +72,24 @@ export default function RemoveBackground() {
   const [rotation, setRotation] = useState(0);
   const [textOpacity, setTextOpacity] = useState(1);
   const [fontFamily, setFontFamily] = useState("Arial");
+  // Legacy state variables kept for backward compatibility with ImageControls
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [outlineWidth, setOutlineWidth] = useState(2);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [outlineEnabled, setOutlineEnabled] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [outlineColor, setOutlineColor] = useState(textColor);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [outlineTransparency, setOutlineTransparency] = useState(1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lineHeight, setLineHeight] = useState(1.2);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">(
     "center"
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [textShadow, setTextShadow] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [textAboveImage, setTextAboveImage] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [removedBgImage, setRemovedBgImage] = useState("");
@@ -55,12 +111,78 @@ export default function RemoveBackground() {
     weekStart: string;
   } | null>(null);
 
+  // Get selected text element
+  const selectedText =
+    textElements.find((el) => el.id === selectedTextId) || textElements[0];
+
+  // Helper functions for managing text elements
+  const addTextElement = () => {
+    const newId = Date.now().toString();
+    const newElement: TextElement = {
+      id: newId,
+      text: "Text",
+      textSize: 200,
+      textColor: "#ffffff",
+      horizontalPosition: 50,
+      verticalPosition: 50,
+      rotation: 0,
+      textOpacity: 1,
+      fontFamily: "Arial",
+      outlineWidth: 2,
+      outlineEnabled: false,
+      outlineColor: "#ffffff",
+      outlineTransparency: 1,
+      lineHeight: 1.2,
+      textAlign: "center",
+      textShadow: 0,
+      textAboveImage: false,
+    };
+    setTextElements([...textElements, newElement]);
+    setSelectedTextId(newId);
+  };
+
+  const removeTextElement = (id: string) => {
+    if (textElements.length <= 1) {
+      // Don't allow removing the last text element
+      return;
+    }
+    const newElements = textElements.filter((el) => el.id !== id);
+    setTextElements(newElements);
+    // Select the first element if the removed one was selected
+    if (selectedTextId === id) {
+      setSelectedTextId(newElements[0].id);
+    }
+  };
+
+  const copyTextElement = (id: string) => {
+    const elementToCopy = textElements.find((el) => el.id === id);
+    if (!elementToCopy) return;
+
+    const newId = Date.now().toString();
+    const newElement: TextElement = {
+      ...elementToCopy,
+      id: newId,
+      // Slightly offset the copied text so it's visible
+      horizontalPosition: Math.min(100, elementToCopy.horizontalPosition + 5),
+      verticalPosition: Math.min(100, elementToCopy.verticalPosition + 5),
+    };
+    setTextElements([...textElements, newElement]);
+    setSelectedTextId(newId);
+  };
+
+  const updateTextElement = (id: string, updates: Partial<TextElement>) => {
+    setTextElements(
+      textElements.map((el) => (el.id === id ? { ...el, ...updates } : el))
+    );
+  };
+
+  // Legacy textPositionStyle for backward compatibility
   const textPositionStyle = {
-    left: `${horizontalPosition}%`,
-    top: `${verticalPosition}%`,
-    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-    opacity: textOpacity,
-    fontFamily: fontFamily,
+    left: `${selectedText.horizontalPosition}%`,
+    top: `${selectedText.verticalPosition}%`,
+    transform: `translate(-50%, -50%) rotate(${selectedText.rotation}deg)`,
+    opacity: selectedText.textOpacity,
+    fontFamily: selectedText.fontFamily,
   };
 
   // Get user pro status from session
@@ -72,17 +194,64 @@ export default function RemoveBackground() {
     setCanSave(!!hasContent);
   }, [removedBgImage, resultImage, setCanSave]);
 
+  // Sync legacy state with selected text element for backward compatibility
+  useEffect(() => {
+    if (selectedText) {
+      setText(selectedText.text);
+      setTextSize(selectedText.textSize);
+      setTextColor(selectedText.textColor);
+      setHorizontalPosition(selectedText.horizontalPosition);
+      setVerticalPosition(selectedText.verticalPosition);
+      setRotation(selectedText.rotation);
+      setTextOpacity(selectedText.textOpacity);
+      setFontFamily(selectedText.fontFamily);
+      setOutlineWidth(selectedText.outlineWidth);
+      setOutlineEnabled(selectedText.outlineEnabled);
+      setOutlineColor(selectedText.outlineColor);
+      setOutlineTransparency(selectedText.outlineTransparency);
+      setLineHeight(selectedText.lineHeight);
+      setTextAlign(selectedText.textAlign);
+      setTextShadow(selectedText.textShadow);
+      setTextAboveImage(selectedText.textAboveImage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedText?.id,
+    selectedText?.text,
+    selectedText?.textSize,
+    selectedText?.textColor,
+    selectedText?.horizontalPosition,
+    selectedText?.verticalPosition,
+    selectedText?.rotation,
+    selectedText?.textOpacity,
+    selectedText?.fontFamily,
+    selectedText?.outlineWidth,
+    selectedText?.outlineEnabled,
+    selectedText?.outlineColor,
+    selectedText?.outlineTransparency,
+    selectedText?.lineHeight,
+    selectedText?.textAlign,
+    selectedText?.textShadow,
+    selectedText?.textAboveImage,
+  ]);
+
   // Sync outline color with text color when text color changes
   useEffect(() => {
-    setOutlineColor(textColor);
-  }, [textColor]);
+    if (selectedText && selectedText.outlineColor !== selectedText.textColor) {
+      updateTextElement(selectedText.id, {
+        outlineColor: selectedText.textColor,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedText?.textColor, selectedText?.id]);
 
   // Ensure text size is never below minimum
   useEffect(() => {
-    if (textSize < 8) {
-      setTextSize(8);
+    if (selectedText && selectedText.textSize < 8) {
+      updateTextElement(selectedText.id, { textSize: 8 });
     }
-  }, [textSize, setTextSize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedText?.textSize, selectedText?.id]);
 
   // Fetch fast generation status on component mount
   useEffect(() => {
@@ -484,9 +653,9 @@ export default function RemoveBackground() {
                   loading={loading}
                   textPositionStyle={textPositionStyle}
                   resultImage={resultImage}
-                  text={text}
-                  textSize={textSize}
-                  textColor={textColor}
+                  text={selectedText.text}
+                  textSize={selectedText.textSize}
+                  textColor={selectedText.textColor}
                   removedBgImage={removedBgImage}
                   setRemovedBgImage={setRemovedBgImage}
                   isCleared={isCleared}
@@ -498,18 +667,22 @@ export default function RemoveBackground() {
                   onRemove={handleRemove}
                   setOriginalFile={setOriginalFile}
                   resetFileInput={resetFileInput}
-                  outlineWidth={outlineWidth}
-                  outlineEnabled={outlineEnabled}
-                  outlineColor={outlineColor}
-                  outlineTransparency={outlineTransparency}
+                  outlineWidth={selectedText.outlineWidth}
+                  outlineEnabled={selectedText.outlineEnabled}
+                  outlineColor={selectedText.outlineColor}
+                  outlineTransparency={selectedText.outlineTransparency}
                   setHorizontalPosition={setHorizontalPosition}
                   setVerticalPosition={setVerticalPosition}
-                  horizontalPosition={horizontalPosition}
-                  verticalPosition={verticalPosition}
-                  lineHeight={lineHeight}
-                  textAlign={textAlign}
-                  textShadow={textShadow}
-                  textAboveImage={textAboveImage}
+                  horizontalPosition={selectedText.horizontalPosition}
+                  verticalPosition={selectedText.verticalPosition}
+                  lineHeight={selectedText.lineHeight}
+                  textAlign={selectedText.textAlign}
+                  textShadow={selectedText.textShadow}
+                  textAboveImage={selectedText.textAboveImage}
+                  textElements={textElements}
+                  selectedTextId={selectedTextId}
+                  onTextElementUpdate={updateTextElement}
+                  onTextElementSelect={setSelectedTextId}
                 />
               </div>
             </div>
@@ -521,22 +694,22 @@ export default function RemoveBackground() {
                   <ImageControls
                     setLoading={setLoading}
                     credits={credits}
-                    text={text}
+                    text={selectedText.text}
                     setResultImage={setResultImage}
                     setText={setText}
-                    textSize={textSize}
+                    textSize={selectedText.textSize}
                     setTextSize={setTextSize}
-                    textColor={textColor}
+                    textColor={selectedText.textColor}
                     setTextColor={setTextColor}
-                    textOpacity={textOpacity}
+                    textOpacity={selectedText.textOpacity}
                     setTextOpacity={setTextOpacity}
-                    horizontalPosition={horizontalPosition}
+                    horizontalPosition={selectedText.horizontalPosition}
                     setHorizontalPosition={setHorizontalPosition}
-                    verticalPosition={verticalPosition}
+                    verticalPosition={selectedText.verticalPosition}
                     setVerticalPosition={setVerticalPosition}
-                    fontFamily={fontFamily}
+                    fontFamily={selectedText.fontFamily}
                     setFontFamily={setFontFamily}
-                    rotation={rotation}
+                    rotation={selectedText.rotation}
                     removeBgImage={removedBgImage}
                     setRemovedBgImage={setRemovedBgImage}
                     setRotation={setRotation}
@@ -545,23 +718,30 @@ export default function RemoveBackground() {
                     setOriginalFile={setOriginalFile}
                     setResetFileInput={setResetFileInput}
                     isPro={isPro}
-                    outlineWidth={outlineWidth}
+                    outlineWidth={selectedText.outlineWidth}
                     setOutlineWidth={setOutlineWidth}
-                    outlineEnabled={outlineEnabled}
+                    outlineEnabled={selectedText.outlineEnabled}
                     setOutlineEnabled={setOutlineEnabled}
-                    outlineColor={outlineColor}
+                    outlineColor={selectedText.outlineColor}
                     setOutlineColor={setOutlineColor}
-                    outlineTransparency={outlineTransparency}
+                    outlineTransparency={selectedText.outlineTransparency}
                     setOutlineTransparency={setOutlineTransparency}
-                    lineHeight={lineHeight}
+                    lineHeight={selectedText.lineHeight}
                     setLineHeight={setLineHeight}
-                    textAlign={textAlign}
+                    textAlign={selectedText.textAlign}
                     setTextAlign={setTextAlign}
-                    textShadow={textShadow}
+                    textShadow={selectedText.textShadow}
                     setTextShadow={setTextShadow}
-                    textAboveImage={textAboveImage}
+                    textAboveImage={selectedText.textAboveImage}
                     setTextAboveImage={setTextAboveImage}
                     fastGenStatus={fastGenStatus}
+                    textElements={textElements}
+                    selectedTextId={selectedTextId}
+                    onTextElementUpdate={updateTextElement}
+                    onTextElementSelect={setSelectedTextId}
+                    onAddTextElement={addTextElement}
+                    onRemoveTextElement={removeTextElement}
+                    onCopyTextElement={copyTextElement}
                   />
                 </div>
               </div>

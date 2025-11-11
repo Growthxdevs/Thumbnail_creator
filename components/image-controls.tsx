@@ -3,7 +3,15 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import PlanModal from "./plan-modal";
 import { fonts } from "@/lib/fonts";
-import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import {
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Plus,
+  Trash2,
+  Copy,
+} from "lucide-react";
+import { TextElement } from "./remove-background";
 
 interface ImageControlsProps {
   setLoading: (value: boolean) => void;
@@ -58,6 +66,14 @@ interface ImageControlsProps {
     usedThisWeek: number;
     weekStart: string;
   } | null;
+  // Multiple text elements support
+  textElements?: TextElement[];
+  selectedTextId?: string;
+  onTextElementUpdate?: (id: string, updates: Partial<TextElement>) => void;
+  onTextElementSelect?: (id: string) => void;
+  onAddTextElement?: () => void;
+  onRemoveTextElement?: (id: string) => void;
+  onCopyTextElement?: (id: string) => void;
 }
 
 function ImageControls({
@@ -105,10 +121,29 @@ function ImageControls({
   textAboveImage,
   setTextAboveImage,
   fastGenStatus,
+  textElements,
+  selectedTextId,
+  onTextElementUpdate,
+  onTextElementSelect,
+  onAddTextElement,
+  onRemoveTextElement,
+  onCopyTextElement,
 }: ImageControlsProps) {
   const limitedFonts = isPro
     ? Object.keys(fonts) // All fonts for Pro users
     : Object.keys(fonts).slice(0, 5);
+
+  // Get selected text element or use legacy props
+  const selectedText = textElements?.find((el) => el.id === selectedTextId);
+  const isUsingMultipleTexts = textElements && textElements.length > 0;
+
+  // Helper function to update selected text element
+  const updateSelectedText = (updates: Partial<TextElement>) => {
+    if (isUsingMultipleTexts && selectedTextId && onTextElementUpdate) {
+      onTextElementUpdate(selectedTextId, updates);
+    }
+  };
+
   return (
     <div className="w-full backdrop-blur-md bg-white/5 p-6 rounded-xl shadow-2xl space-y-6">
       {/* Controls Header */}
@@ -116,6 +151,114 @@ function ImageControls({
         <h2 className="text-2xl font-bold text-white mb-2">Controls</h2>
         <p className="text-gray-400 text-sm">Customize your image</p>
       </div>
+
+      {/* Text Elements List - Show when using multiple texts */}
+      {isUsingMultipleTexts && textElements && (
+        <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h7"
+                />
+              </svg>
+              Text Elements ({textElements.length})
+            </h3>
+            {onAddTextElement && (
+              <Button
+                onClick={onAddTextElement}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                title="Add new text element"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Text
+              </Button>
+            )}
+          </div>
+          <>
+            <style>{`
+              .text-elements-scrollbar::-webkit-scrollbar {
+                width: 8px;
+              }
+              .text-elements-scrollbar::-webkit-scrollbar-track {
+                background: rgba(31, 41, 55, 0.5);
+                border-radius: 10px;
+              }
+              .text-elements-scrollbar::-webkit-scrollbar-thumb {
+                background: #4B5563;
+                border-radius: 10px;
+                border: 2px solid rgba(31, 41, 55, 0.5);
+                transition: background 0.2s ease;
+              }
+              .text-elements-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #6B7280;
+              }
+              .text-elements-scrollbar {
+                scrollbar-width: thin;
+                scrollbar-color: #4B5563 rgba(31, 41, 55, 0.5);
+              }
+            `}</style>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 text-elements-scrollbar">
+              {textElements.map((textEl) => (
+                <div
+                  key={textEl.id}
+                  className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                    selectedTextId === textEl.id
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-gray-600 bg-gray-700/30 hover:bg-gray-700/50"
+                  }`}
+                  onClick={() => onTextElementSelect?.(textEl.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate">
+                        {textEl.text || "Empty text"}
+                      </p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        Size: {textEl.textSize}px • {textEl.fontFamily}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {onCopyTextElement && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCopyTextElement(textEl.id);
+                          }}
+                          className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded transition-colors"
+                          title="Copy text element"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onRemoveTextElement && textElements.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveTextElement(textEl.id);
+                          }}
+                          className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors"
+                          title="Remove text element"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        </div>
+      )}
       {/* Credits Section */}
       <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-4 rounded-lg border border-yellow-500/20">
         <div className="flex items-center justify-between">
@@ -194,14 +337,28 @@ function ImageControls({
             />
           </svg>
           Text Content
+          {/* {isUsingMultipleTexts && selectedText && (
+            <span className="text-xs text-gray-400 ml-2">
+              (Editing: {selectedText.text.substring(0, 20)}
+              {selectedText.text.length > 20 ? "..." : ""})
+            </span>
+          )} */}
         </h3>
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Enter your text
           </label>
           <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            value={
+              isUsingMultipleTexts && selectedText ? selectedText.text : text
+            }
+            onChange={(e) => {
+              if (isUsingMultipleTexts) {
+                updateSelectedText({ text: e.target.value });
+              } else {
+                setText(e.target.value);
+              }
+            }}
             className="w-full p-3 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             placeholder="Enter your text content here..."
             rows={3}
@@ -234,8 +391,18 @@ function ImageControls({
               Font Family
             </label>
             <select
-              value={fontFamily || ""}
-              onChange={(e) => setFontFamily(e.target.value)}
+              value={
+                isUsingMultipleTexts && selectedText
+                  ? selectedText.fontFamily
+                  : fontFamily || ""
+              }
+              onChange={(e) => {
+                if (isUsingMultipleTexts) {
+                  updateSelectedText({ fontFamily: e.target.value });
+                } else {
+                  setFontFamily(e.target.value);
+                }
+              }}
               className="w-full p-3 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
               <option value="" disabled>
@@ -255,14 +422,30 @@ function ImageControls({
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Text Size: {textSize}px
+              Text Size:{" "}
+              {isUsingMultipleTexts && selectedText
+                ? selectedText.textSize
+                : textSize}
+              px
             </label>
             <input
               type="range"
               min="8"
               max="500"
-              value={Math.max(8, textSize)}
-              onChange={(e) => setTextSize(Math.max(8, Number(e.target.value)))}
+              value={Math.max(
+                8,
+                isUsingMultipleTexts && selectedText
+                  ? selectedText.textSize
+                  : textSize
+              )}
+              onChange={(e) => {
+                const newSize = Math.max(8, Number(e.target.value));
+                if (isUsingMultipleTexts) {
+                  updateSelectedText({ textSize: newSize });
+                } else {
+                  setTextSize(newSize);
+                }
+              }}
               className="w-full accent-blue-500"
             />
           </div>
@@ -271,15 +454,29 @@ function ImageControls({
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Line Height: {lineHeight.toFixed(1)}
+          Line Height:{" "}
+          {(isUsingMultipleTexts && selectedText
+            ? selectedText.lineHeight
+            : lineHeight
+          ).toFixed(1)}
         </label>
         <input
           type="range"
           min="0.8"
           max="3.0"
           step="0.1"
-          value={lineHeight}
-          onChange={(e) => setLineHeight(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.lineHeight
+              : lineHeight
+          }
+          onChange={(e) => {
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ lineHeight: Number(e.target.value) });
+            } else {
+              setLineHeight(Number(e.target.value));
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>
@@ -293,35 +490,63 @@ function ImageControls({
             { value: "left", icon: AlignLeft },
             { value: "center", icon: AlignCenter },
             { value: "right", icon: AlignRight },
-          ].map((alignment) => (
-            <button
-              key={alignment.value}
-              onClick={() =>
-                setTextAlign(alignment.value as "left" | "center" | "right")
-              }
-              className={`flex-1 px-3 py-2 rounded-md font-medium transition-colors ${
-                textAlign === alignment.value
-                  ? "bg-blue-500 text-white"
-                  : "bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white"
-              }`}
-            >
-              <alignment.icon className="w-4 h-4 mr-1 inline" />
-            </button>
-          ))}
+          ].map((alignment) => {
+            const currentAlign =
+              isUsingMultipleTexts && selectedText
+                ? selectedText.textAlign
+                : textAlign;
+            return (
+              <button
+                key={alignment.value}
+                onClick={() => {
+                  if (isUsingMultipleTexts) {
+                    updateSelectedText({
+                      textAlign: alignment.value as "left" | "center" | "right",
+                    });
+                  } else {
+                    setTextAlign(
+                      alignment.value as "left" | "center" | "right"
+                    );
+                  }
+                }}
+                className={`flex-1 px-3 py-2 rounded-md font-medium transition-colors ${
+                  currentAlign === alignment.value
+                    ? "bg-blue-500 text-white"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white"
+                }`}
+              >
+                <alignment.icon className="w-4 h-4 mr-1 inline" />
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Text Shadow: {textShadow}px
+          Text Shadow:{" "}
+          {isUsingMultipleTexts && selectedText
+            ? selectedText.textShadow
+            : textShadow}
+          px
         </label>
         <input
           type="range"
           min="0"
           max="20"
           step="1"
-          value={textShadow}
-          onChange={(e) => setTextShadow(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.textShadow
+              : textShadow
+          }
+          onChange={(e) => {
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ textShadow: Number(e.target.value) });
+            } else {
+              setTextShadow(Number(e.target.value));
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>
@@ -330,8 +555,18 @@ function ImageControls({
         <label className="flex items-center space-x-3">
           <input
             type="checkbox"
-            checked={textAboveImage}
-            onChange={(e) => setTextAboveImage(e.target.checked)}
+            checked={
+              isUsingMultipleTexts && selectedText
+                ? selectedText.textAboveImage
+                : textAboveImage
+            }
+            onChange={(e) => {
+              if (isUsingMultipleTexts) {
+                updateSelectedText({ textAboveImage: e.target.checked });
+              } else {
+                setTextAboveImage(e.target.checked);
+              }
+            }}
             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
           />
           <span className="text-sm font-medium text-dark-text-secondary">
@@ -339,7 +574,11 @@ function ImageControls({
           </span>
         </label>
         <p className="text-xs text-gray-400 mt-1">
-          {textAboveImage
+          {(
+            isUsingMultipleTexts && selectedText
+              ? selectedText.textAboveImage
+              : textAboveImage
+          )
             ? "Text appears on top of the image"
             : "Text appears behind the image"}
         </p>
@@ -352,14 +591,34 @@ function ImageControls({
         <div className="flex items-center gap-4">
           <input
             type="color"
-            value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
+            value={
+              isUsingMultipleTexts && selectedText
+                ? selectedText.textColor
+                : textColor
+            }
+            onChange={(e) => {
+              if (isUsingMultipleTexts) {
+                updateSelectedText({ textColor: e.target.value });
+              } else {
+                setTextColor(e.target.value);
+              }
+            }}
             className="w-12 h-8 rounded bg-transparent"
           />
           <input
             type="text"
-            value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
+            value={
+              isUsingMultipleTexts && selectedText
+                ? selectedText.textColor
+                : textColor
+            }
+            onChange={(e) => {
+              if (isUsingMultipleTexts) {
+                updateSelectedText({ textColor: e.target.value });
+              } else {
+                setTextColor(e.target.value);
+              }
+            }}
             className="w-28 p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -371,32 +630,71 @@ function ImageControls({
           <label className="text-sm font-medium text-gray-200">Outline</label>
           <button
             type="button"
-            onClick={() => setOutlineEnabled(!outlineEnabled)}
+            onClick={() => {
+              const newValue = !(isUsingMultipleTexts && selectedText
+                ? selectedText.outlineEnabled
+                : outlineEnabled);
+              if (isUsingMultipleTexts) {
+                updateSelectedText({ outlineEnabled: newValue });
+              } else {
+                setOutlineEnabled(newValue);
+              }
+            }}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-              outlineEnabled ? "bg-blue-600" : "bg-gray-600"
+              (
+                isUsingMultipleTexts && selectedText
+                  ? selectedText.outlineEnabled
+                  : outlineEnabled
+              )
+                ? "bg-blue-600"
+                : "bg-gray-600"
             }`}
           >
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                outlineEnabled ? "translate-x-6" : "translate-x-1"
+                (
+                  isUsingMultipleTexts && selectedText
+                    ? selectedText.outlineEnabled
+                    : outlineEnabled
+                )
+                  ? "translate-x-6"
+                  : "translate-x-1"
               }`}
             />
           </button>
         </div>
 
-        {outlineEnabled && (
+        {(isUsingMultipleTexts && selectedText
+          ? selectedText.outlineEnabled
+          : outlineEnabled) && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                Outline Width: {outlineWidth}px
+                Outline Width:{" "}
+                {isUsingMultipleTexts && selectedText
+                  ? selectedText.outlineWidth
+                  : outlineWidth}
+                px
               </label>
               <input
                 type="range"
                 min="0"
                 max="10"
                 step="0.5"
-                value={outlineWidth}
-                onChange={(e) => setOutlineWidth(Number(e.target.value))}
+                value={
+                  isUsingMultipleTexts && selectedText
+                    ? selectedText.outlineWidth
+                    : outlineWidth
+                }
+                onChange={(e) => {
+                  if (isUsingMultipleTexts) {
+                    updateSelectedText({
+                      outlineWidth: Number(e.target.value),
+                    });
+                  } else {
+                    setOutlineWidth(Number(e.target.value));
+                  }
+                }}
                 className="w-full accent-dark-accent-primary"
               />
             </div>
@@ -408,20 +706,55 @@ function ImageControls({
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={outlineColor}
-                  onChange={(e) => setOutlineColor(e.target.value)}
+                  value={
+                    isUsingMultipleTexts && selectedText
+                      ? selectedText.outlineColor
+                      : outlineColor
+                  }
+                  onChange={(e) => {
+                    if (isUsingMultipleTexts) {
+                      updateSelectedText({ outlineColor: e.target.value });
+                    } else {
+                      setOutlineColor(e.target.value);
+                    }
+                  }}
                   className="w-12 h-8 rounded bg-transparent"
                 />
                 <input
                   type="text"
-                  value={outlineColor}
-                  onChange={(e) => setOutlineColor(e.target.value)}
+                  value={
+                    isUsingMultipleTexts && selectedText
+                      ? selectedText.outlineColor
+                      : outlineColor
+                  }
+                  onChange={(e) => {
+                    if (isUsingMultipleTexts) {
+                      updateSelectedText({ outlineColor: e.target.value });
+                    } else {
+                      setOutlineColor(e.target.value);
+                    }
+                  }}
                   className="w-28 p-2 rounded bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                {outlineColor !== textColor && (
+                {(isUsingMultipleTexts && selectedText
+                  ? selectedText.outlineColor
+                  : outlineColor) !==
+                  (isUsingMultipleTexts && selectedText
+                    ? selectedText.textColor
+                    : textColor) && (
                   <button
                     type="button"
-                    onClick={() => setOutlineColor(textColor)}
+                    onClick={() => {
+                      const textColorValue =
+                        isUsingMultipleTexts && selectedText
+                          ? selectedText.textColor
+                          : textColor;
+                      if (isUsingMultipleTexts) {
+                        updateSelectedText({ outlineColor: textColorValue });
+                      } else {
+                        setOutlineColor(textColorValue);
+                      }
+                    }}
                     className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
                     title="Reset to text color"
                   >
@@ -433,15 +766,33 @@ function ImageControls({
 
             <div>
               <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                Outline Transparency: {Math.round(outlineTransparency * 100)}%
+                Outline Transparency:{" "}
+                {Math.round(
+                  (isUsingMultipleTexts && selectedText
+                    ? selectedText.outlineTransparency
+                    : outlineTransparency) * 100
+                )}
+                %
               </label>
               <input
                 type="range"
                 min="0"
                 max="1"
                 step="0.01"
-                value={outlineTransparency}
-                onChange={(e) => setOutlineTransparency(Number(e.target.value))}
+                value={
+                  isUsingMultipleTexts && selectedText
+                    ? selectedText.outlineTransparency
+                    : outlineTransparency
+                }
+                onChange={(e) => {
+                  if (isUsingMultipleTexts) {
+                    updateSelectedText({
+                      outlineTransparency: Number(e.target.value),
+                    });
+                  } else {
+                    setOutlineTransparency(Number(e.target.value));
+                  }
+                }}
                 className="w-full accent-dark-accent-primary"
               />
             </div>
@@ -451,57 +802,122 @@ function ImageControls({
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Text Opacity: {Math.round(textOpacity * 100)}%
+          Text Opacity:{" "}
+          {Math.round(
+            (isUsingMultipleTexts && selectedText
+              ? selectedText.textOpacity
+              : textOpacity) * 100
+          )}
+          %
         </label>
         <input
           type="range"
           min="0"
           max="1"
           step="0.01"
-          value={textOpacity}
-          onChange={(e) => setTextOpacity(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.textOpacity
+              : textOpacity
+          }
+          onChange={(e) => {
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ textOpacity: Number(e.target.value) });
+            } else {
+              setTextOpacity(Number(e.target.value));
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Horizontal Position: {Math.round(horizontalPosition)}%
+          Horizontal Position:{" "}
+          {Math.round(
+            isUsingMultipleTexts && selectedText
+              ? selectedText.horizontalPosition
+              : horizontalPosition
+          )}
+          %
         </label>
         <input
           type="range"
           min="0"
           max="100"
-          value={horizontalPosition}
-          onChange={(e) => setHorizontalPosition(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.horizontalPosition
+              : horizontalPosition
+          }
+          onChange={(e) => {
+            const newValue = Number(e.target.value);
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ horizontalPosition: newValue });
+            } else {
+              setHorizontalPosition(newValue);
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Vertical Position: {Math.round(verticalPosition)}%
+          Vertical Position:{" "}
+          {Math.round(
+            isUsingMultipleTexts && selectedText
+              ? selectedText.verticalPosition
+              : verticalPosition
+          )}
+          %
         </label>
         <input
           type="range"
           min="0"
           max="100"
-          value={verticalPosition}
-          onChange={(e) => setVerticalPosition(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.verticalPosition
+              : verticalPosition
+          }
+          onChange={(e) => {
+            const newValue = Number(e.target.value);
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ verticalPosition: newValue });
+            } else {
+              setVerticalPosition(newValue);
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-          Rotation: {`${rotation}\u00B0`}
+          Rotation:{" "}
+          {`${
+            isUsingMultipleTexts && selectedText
+              ? selectedText.rotation
+              : rotation
+          }\u00B0`}
         </label>
         <input
           type="range"
           min="-180"
           max="180"
-          value={rotation}
-          onChange={(e) => setRotation(Number(e.target.value))}
+          value={
+            isUsingMultipleTexts && selectedText
+              ? selectedText.rotation
+              : rotation
+          }
+          onChange={(e) => {
+            if (isUsingMultipleTexts) {
+              updateSelectedText({ rotation: Number(e.target.value) });
+            } else {
+              setRotation(Number(e.target.value));
+            }
+          }}
           className="w-full accent-dark-accent-primary"
         />
       </div>

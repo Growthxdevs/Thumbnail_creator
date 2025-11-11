@@ -362,6 +362,7 @@ const zillaSlab = Zilla_Slab({ subsets: ["latin"], weight: "400" });
 
 // Map font names to their respective classes
 export const fonts = {
+  Arial: "Arial, sans-serif",
   Inter: inter.className,
   Roboto: roboto.className,
   Lora: lora.className,
