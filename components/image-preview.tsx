@@ -282,6 +282,13 @@ function ImagePreview({
             borderRadius: "0px",
             border: "none",
           },
+          filter: (node) => {
+            // Exclude the clear button from the download
+            if (node instanceof HTMLElement) {
+              return node.getAttribute("data-exclude-from-download") !== "true";
+            }
+            return true;
+          },
         });
 
         const link = document.createElement("a");
@@ -480,7 +487,10 @@ function ImagePreview({
               onMouseDown={(e) => {
                 e.stopPropagation();
               }}
-              className="absolute top-3 right-3 z-50 w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-all duration-200 opacity-100"
+              className={`absolute top-3 right-3 z-50 w-8 h-8 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-all duration-200 opacity-100 ${
+                downloading ? "hidden" : ""
+              }`}
+              data-exclude-from-download="true"
               title="Remove Image"
             >
               <X className="w-5 h-5" />
